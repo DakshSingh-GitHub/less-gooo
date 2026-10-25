@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Post, UserProfile, toggleLikePostInDb } from "@/lib/appwrite";
+import { Post, UserProfile, toggleLikePostInDb, deletePostFromDb } from "@/lib/appwrite";
 import CreatePostModal from "./CreatePostModal";
 
 export type FeedSubFilter = "latest" | "hot" | "growing" | "mine";
@@ -12,6 +12,7 @@ interface FeedViewProps {
   isLoading?: boolean;
   onPostCreated: (post: Post) => void;
   onPostUpdated: (updatedPost: Post) => void;
+  onPostDeleted: (postId: string) => void;
 }
 
 export default function FeedView({
@@ -20,6 +21,7 @@ export default function FeedView({
   isLoading = false,
   onPostCreated,
   onPostUpdated,
+  onPostDeleted,
 }: FeedViewProps) {
   const [subFilter, setSubFilter] = useState<FeedSubFilter>("latest");
   const [searchQuery, setSearchQuery] = useState("");
@@ -27,6 +29,8 @@ export default function FeedView({
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [toastText, setToastText] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const showNotification = (msg: string) => {
     setToastText(msg);
@@ -113,6 +117,20 @@ export default function FeedView({
       navigator.clipboard.writeText(url).then(() => {
         showNotification("Post reference link copied to clipboard!");
       });
+    }
+  };
+
+  const handleDeletePost = async (postId: string) => {
+    setIsDeleting(true);
+    try {
+      await deletePostFromDb(postId, user.userId);
+      onPostDeleted(postId);
+      showNotification("Post deleted from community feed.");
+      setConfirmDeleteId(null);
+    } catch {
+      showNotification("Could not delete post.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -376,15 +394,52 @@ export default function FeedView({
                     </div>
                   </div>
 
-                  <button
-                    onClick={() => handleCopyLink(post)}
-                    title="Copy reference link"
-                    className="p-1.5 rounded-lg text-[#71717A] hover:text-[#18181B] dark:hover:text-[#F4F1EA] hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                    </svg>
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    {/* Owner Action: Delete Post with Confirmation */}
+                    {isAuthor && (
+                      confirmDeleteId === (post.$id || post.id) ? (
+                        <div className="flex items-center gap-1.5 p-1 px-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs font-mono animate-fadeIn">
+                          <span className="text-[11px] font-semibold">Delete?</span>
+                          <button
+                            type="button"
+                            disabled={isDeleting}
+                            onClick={() => handleDeletePost(post.$id || post.id || "")}
+                            className="px-2 py-0.5 rounded-md bg-red-600 hover:bg-red-700 text-white text-[10px] font-bold uppercase transition-colors cursor-pointer"
+                          >
+                            {isDeleting ? "..." : "Yes"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setConfirmDeleteId(null)}
+                            className="px-1 py-0.5 text-[#71717A] hover:text-[#18181B] dark:hover:text-white text-xs cursor-pointer"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDeleteId(post.$id || post.id || "")}
+                          title="Delete your post"
+                          className="p-1.5 rounded-lg text-[#71717A] hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      )
+                    )}
+
+                    <button
+                      onClick={() => handleCopyLink(post)}
+                      title="Copy reference link"
+                      className="p-1.5 rounded-lg text-[#71717A] hover:text-[#18181B] dark:hover:text-[#F4F1EA] hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Post Body */}

@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   getCurrentUserProfile,
+  getCachedUserProfile,
+  setCachedUserProfile,
   logoutUser,
   UserProfile,
   Trip,
@@ -52,33 +54,55 @@ export default function DashboardPage() {
       document.documentElement.classList.remove("dark");
     }
 
-    // Verify session
+    // 1. Instant Zero-Latency Load from LocalStorage Cache
+    const cachedUser = getCachedUserProfile();
+    if (cachedUser) {
+      setUser(cachedUser);
+      setAuthChecking(false); // Instantly unlock dashboard with zero loading delay!
+
+      // Preload locally cached trips and feed posts immediately
+      try {
+        const cachedTripsRaw = localStorage.getItem(`lessgooo_trips_${cachedUser.userId}`);
+        if (cachedTripsRaw) {
+          setTrips(JSON.parse(cachedTripsRaw));
+        }
+        const cachedPostsRaw = localStorage.getItem("lessgooo_feed_posts");
+        if (cachedPostsRaw) {
+          setPosts(JSON.parse(cachedPostsRaw));
+        }
+      } catch {}
+    }
+
+    // 2. Background Revalidation (Stale-While-Revalidate)
     getCurrentUserProfile().then(async (res) => {
       if (!res?.account) {
+        // Active session is invalid or revoked on server
+        setCachedUserProfile(null);
         router.replace("/login");
         return;
       }
 
       if (res.profile) {
         setUser(res.profile);
+        setCachedUserProfile(res.profile);
 
-        // Fetch real trips from Appwrite
+        // Background sync real trips, expenses, and posts from Appwrite
         const userTrips = await fetchUserTrips(res.profile.userId);
         setTrips(userTrips);
 
-        // Fetch real expenses from Appwrite
         const userExpenses = await fetchUserExpenses(res.profile.userId);
         setExpenses(userExpenses);
 
-        // Fetch real community feed posts from Appwrite (Strictly 0 mock data)
-        setPostsLoading(true);
         const feedPosts = await fetchFeedPosts();
         setPosts(feedPosts);
-        setPostsLoading(false);
       }
       setAuthChecking(false);
-    }).catch(() => {
-      router.replace("/login");
+    }).catch((err) => {
+      console.warn("Background session revalidation notice:", err);
+      // If we don't even have a cached user, redirect to login
+      if (!cachedUser) {
+        router.replace("/login");
+      }
     });
   }, [router]);
 
@@ -185,6 +209,12 @@ export default function DashboardPage() {
     setPosts((prev) =>
       prev.map((p) => ((p.$id || p.id) === (updatedPost.$id || updatedPost.id) ? updatedPost : p))
     );
+  };
+
+  // Handle Post Deleted (Owner only)
+  const handlePostDeleted = (postId: string) => {
+    setPosts((prev) => prev.filter((p) => (p.$id || p.id) !== postId));
+    showToast("Post deleted from community feed.");
   };
 
   // Dynamic Breadcrumb Label
@@ -315,6 +345,7 @@ export default function DashboardPage() {
                 isLoading={postsLoading}
                 onPostCreated={handlePostCreated}
                 onPostUpdated={handlePostUpdated}
+                onPostDeleted={handlePostDeleted}
               />
             </div>
           )}

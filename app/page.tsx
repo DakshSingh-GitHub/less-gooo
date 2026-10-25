@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
-import { client, getCurrentUserProfile, logoutUser, UserProfile } from "@/lib/appwrite";
+import { client, getCurrentUserProfile, getCachedUserProfile, logoutUser, UserProfile } from "@/lib/appwrite";
 import AuthModal from "@/components/AuthModal";
 
 export default function Home() {
@@ -24,10 +24,18 @@ export default function Home() {
       console.log("Appwrite ping response:", err);
     });
 
-    // Check active session
+    // 1. Instant User Render from Cache
+    const cachedUser = getCachedUserProfile();
+    if (cachedUser) {
+      setCurrentUser(cachedUser);
+    }
+
+    // 2. Background Session Revalidation
     getCurrentUserProfile().then((res) => {
       if (res?.profile) {
         setCurrentUser(res.profile);
+      } else {
+        setCurrentUser(null);
       }
     });
 

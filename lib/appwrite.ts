@@ -275,6 +275,36 @@ export interface UserProfile {
   createdAt: string;
 }
 
+export const VERIFIED_USER_STORAGE_KEY = "lessgooo_verified_user";
+
+/**
+ * Get verified user profile from local storage for instant zero-latency page loads
+ */
+export function getCachedUserProfile(): UserProfile | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(VERIFIED_USER_STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Persist or clear verified user profile in local storage
+ */
+export function setCachedUserProfile(profile: UserProfile | null): void {
+  if (typeof window === "undefined") return;
+  try {
+    if (profile) {
+      localStorage.setItem(VERIFIED_USER_STORAGE_KEY, JSON.stringify(profile));
+    } else {
+      localStorage.removeItem(VERIFIED_USER_STORAGE_KEY);
+    }
+  } catch {}
+}
+
 export interface RegisterPayload {
   fullName: string;
   email: string;
@@ -330,6 +360,7 @@ export async function registerUser(payload: RegisterPayload) {
     console.warn("User registered in Auth, but could not write to database collection (ensure collection exists in console):", dbError);
   }
 
+  setCachedUserProfile(profileData);
   return { account: newAccount, profile: profileData };
 }
 
@@ -364,6 +395,7 @@ export async function loginUser(email: string, password: string) {
     };
   }
 
+  setCachedUserProfile(profile);
   return { session, account: currentAccount, profile };
 }
 
@@ -371,7 +403,12 @@ export async function loginUser(email: string, password: string) {
  * Log out current session
  */
 export async function logoutUser() {
-  return await account.deleteSession("current");
+  setCachedUserProfile(null);
+  try {
+    return await account.deleteSession("current");
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -400,8 +437,12 @@ export async function getCurrentUserProfile(): Promise<{ account: any; profile: 
         createdAt: currentAccount.$createdAt,
       };
     }
+    if (profile) {
+      setCachedUserProfile(profile);
+    }
     return { account: currentAccount, profile };
   } catch {
+    setCachedUserProfile(null);
     return null;
   }
 }
@@ -429,7 +470,9 @@ export async function updateUserProfile(
       userId,
       updates
     );
-    return updatedDoc as unknown as UserProfile;
+    const updated = updatedDoc as unknown as UserProfile;
+    setCachedUserProfile(updated);
+    return updated;
   } catch (err) {
     console.warn("Could not update user in Appwrite DB:", err);
     try {
@@ -442,6 +485,7 @@ export async function updateUserProfile(
           userId,
           merged
         );
+        setCachedUserProfile(merged);
         return merged;
       }
     } catch {}
@@ -664,6 +708,32 @@ export async function toggleLikePostInDb(
   }
 
   return { likesCount: newLikesCount, likedBy: newLikedBy };
+}
+
+/**
+ * Delete a post from Appwrite DB & local cache (Owner only)
+ */
+export async function deletePostFromDb(postId: string, userId: string): Promise<boolean> {
+  try {
+    await databases.deleteDocument(
+      APPWRITE_DATABASE_ID,
+      APPWRITE_POSTS_COLLECTION_ID,
+      postId
+    );
+  } catch (err) {
+    console.warn("Could not delete post from Appwrite DB (cleaning local cache):", err);
+  }
+
+  // Always sync local storage
+  if (typeof window !== "undefined") {
+    try {
+      const existing: Post[] = JSON.parse(localStorage.getItem("lessgooo_feed_posts") || "[]");
+      const filtered = existing.filter((p) => (p.$id || p.id) !== postId);
+      localStorage.setItem("lessgooo_feed_posts", JSON.stringify(filtered));
+    } catch {}
+  }
+
+  return true;
 }
 
 function syncFeedPostToLocalStorage(post: Post) {

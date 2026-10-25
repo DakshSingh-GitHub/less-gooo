@@ -3,7 +3,14 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { getCurrentUserProfile, logoutUser, updateUserProfile, UserProfile } from "@/lib/appwrite";
+import {
+  getCurrentUserProfile,
+  getCachedUserProfile,
+  setCachedUserProfile,
+  logoutUser,
+  updateUserProfile,
+  UserProfile
+} from "@/lib/appwrite";
 
 const INDIAN_STATES = [
   "Andhra Pradesh", "Assam", "Bihar", "Chhattisgarh", "Delhi", "Goa",
@@ -39,18 +46,33 @@ export default function AccountInfoPage() {
       document.documentElement.classList.remove("dark");
     }
 
+    // Instant Load from Cache
+    const cachedUser = getCachedUserProfile();
+    if (cachedUser) {
+      setUser(cachedUser);
+      setFullName(cachedUser.fullName || "");
+      setPhone(cachedUser.phone || "");
+      setState(cachedUser.state || "Uttar Pradesh");
+      setAuthChecking(false);
+    }
+
+    // Background Revalidation
     getCurrentUserProfile().then((res) => {
       if (!res?.account || !res.profile) {
+        setCachedUserProfile(null);
         router.replace("/login");
         return;
       }
       setUser(res.profile);
+      setCachedUserProfile(res.profile);
       setFullName(res.profile.fullName || "");
       setPhone(res.profile.phone || "");
       setState(res.profile.state || "Uttar Pradesh");
       setAuthChecking(false);
     }).catch(() => {
-      router.replace("/login");
+      if (!cachedUser) {
+        router.replace("/login");
+      }
     });
   }, [router]);
 
