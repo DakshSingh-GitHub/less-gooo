@@ -8,10 +8,12 @@ import {
   UserProfile,
   Trip,
   ExpenseItem,
+  Post,
   fetchUserTrips,
   setTripActiveInDb,
   fetchUserExpenses,
-  addExpenseToDb
+  addExpenseToDb,
+  fetchFeedPosts
 } from "@/lib/appwrite";
 
 import DashboardNavbar from "@/components/dashboard/DashboardNavbar";
@@ -21,6 +23,7 @@ import TripCreateForm from "@/components/dashboard/TripCreateForm";
 import UpcomingTripsView from "@/components/dashboard/UpcomingTripsView";
 import ExpenseManagerView from "@/components/dashboard/ExpenseManagerView";
 import DiscoverView from "@/components/dashboard/DiscoverView";
+import FeedView from "@/components/dashboard/FeedView";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -33,6 +36,8 @@ export default function DashboardPage() {
   // Real Data Entities
   const [trips, setTrips] = useState<Trip[]>([]);
   const [expenses, setExpenses] = useState<ExpenseItem[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [postsLoading, setPostsLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Authentication & Initial Data Fetch
@@ -64,6 +69,12 @@ export default function DashboardPage() {
         // Fetch real expenses from Appwrite
         const userExpenses = await fetchUserExpenses(res.profile.userId);
         setExpenses(userExpenses);
+
+        // Fetch real community feed posts from Appwrite (Strictly 0 mock data)
+        setPostsLoading(true);
+        const feedPosts = await fetchFeedPosts();
+        setPosts(feedPosts);
+        setPostsLoading(false);
       }
       setAuthChecking(false);
     }).catch(() => {
@@ -163,6 +174,19 @@ export default function DashboardPage() {
     showToast(`Expense of ${activeTrip?.currency || "₹"} ${data.amountINR} recorded.`);
   };
 
+  // Handle Post Created
+  const handlePostCreated = (newPost: Post) => {
+    setPosts((prev) => [newPost, ...prev]);
+    showToast("Dispatch published to community feed.");
+  };
+
+  // Handle Post Updated (Likes, etc.)
+  const handlePostUpdated = (updatedPost: Post) => {
+    setPosts((prev) =>
+      prev.map((p) => ((p.$id || p.id) === (updatedPost.$id || updatedPost.id) ? updatedPost : p))
+    );
+  };
+
   // Dynamic Breadcrumb Label
   const getBreadcrumbLabel = () => {
     switch (currentView) {
@@ -174,6 +198,8 @@ export default function DashboardPage() {
         return "New Trip Plan";
       case "expenses":
         return "Expense Manager";
+      case "feed":
+        return "Community Feed";
       case "discover":
         return "Discover & Guides";
       case "settings":
@@ -277,6 +303,18 @@ export default function DashboardPage() {
                 expenses={expenses}
                 activeTrip={activeTrip}
                 onAddExpense={handleAddExpense}
+              />
+            </div>
+          )}
+
+          {currentView === "feed" && user && (
+            <div className="space-y-6">
+              <FeedView
+                user={user}
+                posts={posts}
+                isLoading={postsLoading}
+                onPostCreated={handlePostCreated}
+                onPostUpdated={handlePostUpdated}
               />
             </div>
           )}

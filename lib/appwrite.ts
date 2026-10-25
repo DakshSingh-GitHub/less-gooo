@@ -9,6 +9,7 @@ export const APPWRITE_TRIPS_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_TRI
 export const APPWRITE_ITINERARIES_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_ITINERARIES_COLLECTION_ID || "itineraries";
 export const APPWRITE_EXPENSES_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_EXPENSES_COLLECTION_ID || "expenses";
 export const APPWRITE_GUIDES_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_GUIDES_COLLECTION_ID || "guides";
+export const APPWRITE_POSTS_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_POSTS_COLLECTION_ID || "posts";
 
 const client = new Client()
   .setEndpoint(APPWRITE_ENDPOINT)
@@ -446,4 +447,230 @@ export async function updateUserProfile(
     } catch {}
     return null;
   }
+}
+
+export interface Post {
+  $id?: string;
+  id?: string;
+  userId: string;
+  authorName: string;
+  authorUsername: string;
+  title: string;
+  content: string;
+  category: string;
+  tags: string[];
+  likesCount: number;
+  likedBy: string[];
+  createdAt: string;
+}
+
+export const DEFAULT_POST_TAGS = [
+  "#Varanasi",
+  "#GhatWalks",
+  "#Backpacking",
+  "#SoloTravel",
+  "#HiddenGems",
+  "#StreetFood",
+  "#BudgetTravel",
+  "#HeritageWalk",
+  "#SunrisePoint",
+  "#LocalChai",
+  "#TravelTips",
+  "#TempleGuide",
+  "#NightWalks",
+  "#BoatRide",
+  "#CulturalImmersion",
+  "#PhotographySpot",
+  "#SpiritualJourney",
+  "#WeekendGetaway",
+  "#HomestayFinds",
+  "#MonsoonTravel",
+  "#OffTheBeatenPath",
+  "#SafeTravel",
+  "#TrainJourneys",
+  "#HistoricalSites",
+  "#EveningAarti",
+  "#ArtAndCraft",
+  "#TrekDiaries",
+  "#LocalLegends",
+  "#SlowTravel",
+  "#RoadTrip",
+] as const;
+
+export const DEFAULT_POST_CATEGORIES = [
+  "Experiences",
+  "Tips & Hacks",
+  "Ask Community",
+  "Itinerary Review",
+  "Food & Chai",
+  "Scam Alert",
+  "Solo Meetups",
+  "Hidden Gems",
+] as const;
+
+/**
+ * Fetch all feed posts from Appwrite (Strictly 0 mock data)
+ */
+export async function fetchFeedPosts(): Promise<Post[]> {
+  try {
+    const res = await databases.listDocuments(
+      APPWRITE_DATABASE_ID,
+      APPWRITE_POSTS_COLLECTION_ID,
+      [Query.orderDesc("createdAt"), Query.limit(100)]
+    );
+    return res.documents.map((doc: any) => ({
+      $id: doc.$id,
+      id: doc.$id || doc.id,
+      userId: doc.userId || doc.user_id || "",
+      authorName: doc.authorName || doc.author_name || "Anonymous Traveller",
+      authorUsername: doc.authorUsername || doc.author_username || "traveller",
+      title: doc.title || "",
+      content: doc.content || "",
+      category: doc.category || "General",
+      tags: Array.isArray(doc.tags)
+        ? doc.tags
+        : typeof doc.tags === "string"
+        ? (() => {
+            try {
+              return JSON.parse(doc.tags);
+            } catch {
+              return doc.tags.split(",").map((s: string) => s.trim()).filter(Boolean);
+            }
+          })()
+        : [],
+      likesCount: doc.likesCount ?? doc.likes_count ?? 0,
+      likedBy: Array.isArray(doc.likedBy)
+        ? doc.likedBy
+        : typeof doc.liked_by === "string"
+        ? (() => {
+            try {
+              return JSON.parse(doc.liked_by);
+            } catch {
+              return [];
+            }
+          })()
+        : [],
+      createdAt: doc.createdAt || doc.created_at || doc.$createdAt || new Date().toISOString(),
+    }));
+  } catch (err) {
+    console.warn("Could not fetch posts from Appwrite (falling back to local cache):", err);
+    if (typeof window !== "undefined") {
+      const cached = localStorage.getItem("lessgooo_feed_posts");
+      if (cached) {
+        try {
+          return JSON.parse(cached);
+        } catch {}
+      }
+    }
+    return []; // Zero mock data!
+  }
+}
+
+/**
+ * Create a new feed post in Appwrite & local cache
+ */
+export async function createPostInDb(postData: Omit<Post, "$id">): Promise<Post | null> {
+  const newPostId = ID.unique();
+  const serializedPost = {
+    userId: postData.userId,
+    user_id: postData.userId,
+    authorName: postData.authorName,
+    author_name: postData.authorName,
+    authorUsername: postData.authorUsername,
+    author_username: postData.authorUsername,
+    title: postData.title,
+    content: postData.content,
+    category: postData.category,
+    tags: JSON.stringify(postData.tags),
+    likesCount: 0,
+    likes_count: 0,
+    likedBy: JSON.stringify([]),
+    liked_by: JSON.stringify([]),
+    createdAt: postData.createdAt || new Date().toISOString(),
+    created_at: postData.createdAt || new Date().toISOString(),
+  };
+
+  try {
+    const doc = await databases.createDocument(
+      APPWRITE_DATABASE_ID,
+      APPWRITE_POSTS_COLLECTION_ID,
+      newPostId,
+      serializedPost
+    );
+    const created: Post = {
+      $id: doc.$id,
+      ...postData,
+      id: doc.$id,
+      likesCount: 0,
+      likedBy: [],
+      createdAt: postData.createdAt || new Date().toISOString(),
+    };
+    syncFeedPostToLocalStorage(created);
+    return created;
+  } catch (err) {
+    console.warn("Could not save post to Appwrite DB (persisting locally):", err);
+    const localPost: Post = {
+      $id: "post_" + Date.now(),
+      id: "post_" + Date.now(),
+      ...postData,
+      likesCount: 0,
+      likedBy: [],
+      createdAt: postData.createdAt || new Date().toISOString(),
+    };
+    syncFeedPostToLocalStorage(localPost);
+    return localPost;
+  }
+}
+
+/**
+ * Toggle like on a feed post
+ */
+export async function toggleLikePostInDb(
+  postId: string,
+  userId: string,
+  currentPost: Post
+): Promise<{ likesCount: number; likedBy: string[] }> {
+  const hasLiked = currentPost.likedBy.includes(userId);
+  const newLikedBy = hasLiked
+    ? currentPost.likedBy.filter((id) => id !== userId)
+    : [...currentPost.likedBy, userId];
+  const newLikesCount = Math.max(0, currentPost.likesCount + (hasLiked ? -1 : 1));
+
+  try {
+    await databases.updateDocument(
+      APPWRITE_DATABASE_ID,
+      APPWRITE_POSTS_COLLECTION_ID,
+      postId,
+      {
+        likesCount: newLikesCount,
+        likes_count: newLikesCount,
+        likedBy: JSON.stringify(newLikedBy),
+        liked_by: JSON.stringify(newLikedBy),
+      }
+    );
+  } catch (err) {
+    console.warn("Could not sync like to Appwrite DB (updating locally):", err);
+  }
+
+  // Update local storage
+  if (typeof window !== "undefined") {
+    try {
+      const existing: Post[] = JSON.parse(localStorage.getItem("lessgooo_feed_posts") || "[]");
+      const updated = existing.map((p) =>
+        (p.$id || p.id) === postId ? { ...p, likesCount: newLikesCount, likedBy: newLikedBy } : p
+      );
+      localStorage.setItem("lessgooo_feed_posts", JSON.stringify(updated));
+    } catch {}
+  }
+
+  return { likesCount: newLikesCount, likedBy: newLikedBy };
+}
+
+function syncFeedPostToLocalStorage(post: Post) {
+  if (typeof window === "undefined") return;
+  try {
+    const existing: Post[] = JSON.parse(localStorage.getItem("lessgooo_feed_posts") || "[]");
+    const updated = [post, ...existing.filter((p) => (p.$id || p.id) !== (post.$id || post.id))];
+    localStorage.setItem("lessgooo_feed_posts", JSON.stringify(updated));
+  } catch {}
 }

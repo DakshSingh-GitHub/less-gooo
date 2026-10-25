@@ -2,7 +2,7 @@
 
 import { Trip } from "@/lib/appwrite";
 
-export type SidebarView = "active-trip" | "upcoming-trips" | "new-trip" | "expenses" | "discover" | "settings";
+export type SidebarView = "active-trip" | "upcoming-trips" | "new-trip" | "expenses" | "discover" | "feed" | "settings";
 
 interface DashboardSidebarProps {
   currentView: SidebarView;
@@ -117,7 +117,27 @@ export default function DashboardSidebar({
               </div>
             </button>
 
-            {/* 4. Discover & Explore */}
+            {/* 4. Feed */}
+            <button
+              onClick={() => handleNavClick("feed")}
+              className={`w-full flex items-center justify-between p-3 rounded-xl text-xs font-mono uppercase tracking-wider transition-colors cursor-pointer ${
+                currentView === "feed"
+                  ? "bg-white dark:bg-[#1A1B20] text-[#C84B26] dark:text-[#E05A32] font-semibold shadow-sm border border-[#E7E3DC] dark:border-[#26272D]"
+                  : "text-[#71717A] dark:text-[#A1A1AA] hover:text-[#18181B] dark:hover:text-[#F4F1EA] hover:bg-black/[0.02] dark:hover:bg-white/[0.02]"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                </svg>
+                <span>Feed</span>
+              </div>
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-[#C84B26]/10 text-[#C84B26]">
+                Community
+              </span>
+            </button>
+
+            {/* 5. Discover & Explore */}
             <button
               onClick={() => handleNavClick("discover")}
               className={`w-full flex items-center justify-between p-3 rounded-xl text-xs font-mono uppercase tracking-wider transition-colors cursor-pointer ${
