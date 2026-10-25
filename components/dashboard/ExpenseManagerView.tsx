@@ -148,7 +148,7 @@ export default function ExpenseManagerView({
               placeholder="e.g. Metro pass / dinner"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-[#E7E3DC] dark:border-[#26272D] bg-[#FAF8F5] dark:bg-[#121316] text-sm focus:outline-none focus:border-[#C84B26]"
+              className="w-full h-11 px-3.5 rounded-xl border border-[#E7E3DC] dark:border-[#26272D] bg-[#FAF8F5] dark:bg-[#121316] text-[#18181B] dark:text-[#F4F1EA] text-sm focus:outline-none focus:border-[#C84B26]"
             />
           </div>
 
@@ -161,24 +161,31 @@ export default function ExpenseManagerView({
               placeholder="e.g. 250"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-[#E7E3DC] dark:border-[#26272D] bg-[#FAF8F5] dark:bg-[#121316] text-sm focus:outline-none focus:border-[#C84B26]"
+              className="w-full h-11 px-3.5 rounded-xl border border-[#E7E3DC] dark:border-[#26272D] bg-[#FAF8F5] dark:bg-[#121316] text-[#18181B] dark:text-[#F4F1EA] text-sm focus:outline-none focus:border-[#C84B26]"
             />
           </div>
 
           <div>
             <label className="block text-xs font-mono text-[#71717A] mb-1">Category</label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value as any)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-[#E7E3DC] dark:border-[#26272D] bg-[#FAF8F5] dark:bg-[#121316] text-sm focus:outline-none focus:border-[#C84B26]"
-            >
-              <option value="transit">Transit & Transport</option>
-              <option value="food">Meals & Food</option>
-              <option value="temple">Sightseeing & Admissions</option>
-              <option value="guide">Guide & Assistance</option>
-              <option value="shopping">Shopping & Souvenirs</option>
-              <option value="stay">Lodging & Stay</option>
-            </select>
+            <div className="relative">
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value as any)}
+                className="w-full h-11 px-3.5 pr-9 rounded-xl border border-[#E7E3DC] dark:border-[#26272D] bg-[#FAF8F5] dark:bg-[#121316] text-[#18181B] dark:text-[#F4F1EA] text-sm focus:outline-none focus:border-[#C84B26] appearance-none cursor-pointer"
+              >
+                <option value="transit">Transit & Transport</option>
+                <option value="food">Meals & Food</option>
+                <option value="temple">Sightseeing & Admissions</option>
+                <option value="guide">Guide & Assistance</option>
+                <option value="shopping">Shopping & Souvenirs</option>
+                <option value="stay">Lodging & Stay</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3.5 text-[#71717A] dark:text-[#A1A1AA]">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
           </div>
 
           <button
@@ -198,19 +205,26 @@ export default function ExpenseManagerView({
             </span>
 
             {/* Category Filter */}
-            <select
-              value={selectedFilter}
-              onChange={(e) => setSelectedFilter(e.target.value)}
-              className="px-2.5 py-1 text-xs font-mono rounded-lg border border-[#E7E3DC] dark:border-[#26272D] bg-white dark:bg-[#1A1B20] text-[#71717A]"
-            >
-              <option value="all">All Categories</option>
-              <option value="transit">Transit</option>
-              <option value="food">Food</option>
-              <option value="temple">Sightseeing</option>
-              <option value="guide">Guide</option>
-              <option value="shopping">Shopping</option>
-              <option value="stay">Stay</option>
-            </select>
+            <div className="relative">
+              <select
+                value={selectedFilter}
+                onChange={(e) => setSelectedFilter(e.target.value)}
+                className="h-9 pl-3 pr-8 text-xs font-mono rounded-lg border border-[#E7E3DC] dark:border-[#26272D] bg-white dark:bg-[#1A1B20] text-[#18181B] dark:text-[#F4F1EA] appearance-none cursor-pointer focus:outline-none focus:border-[#C84B26]"
+              >
+                <option value="all">All Categories</option>
+                <option value="transit">Transit</option>
+                <option value="food">Food</option>
+                <option value="temple">Sightseeing</option>
+                <option value="guide">Guide</option>
+                <option value="shopping">Shopping</option>
+                <option value="stay">Stay</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-[#71717A] dark:text-[#A1A1AA]">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
           </div>
 
           {filteredExpenses.length === 0 ? (

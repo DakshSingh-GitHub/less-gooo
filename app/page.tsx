@@ -12,6 +12,7 @@ export default function Home() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const navRef = useRef<HTMLDivElement>(null);
 
   // Initialize theme from localStorage or system preference and check user session
@@ -258,15 +259,15 @@ export default function Home() {
               )}
             </button>
 
-            {/* User Profile or Login/Signup */}
+            {/* User Account Dropdown Only */}
             {currentUser ? (
-              <div className="flex items-center gap-3">
-                <a
-                  href="/dashboard"
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#E7E3DC] dark:border-[#26272D] bg-white dark:bg-[#1A1B20] shadow-sm hover:border-[#C84B26] transition-colors"
+              <div className="relative">
+                <button
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#E7E3DC] dark:border-[#26272D] bg-white dark:bg-[#1A1B20] shadow-sm hover:border-[#C84B26] transition-colors cursor-pointer"
                 >
                   <div className="w-6 h-6 rounded-full bg-[#C84B26] text-white flex items-center justify-center font-mono text-[11px] font-bold uppercase">
-                    {currentUser.fullName ? currentUser.fullName[0] : "T"}
+                    {currentUser.fullName ? currentUser.fullName[0] : "U"}
                   </div>
                   <span className="text-xs font-mono font-medium text-[#18181B] dark:text-[#F4F1EA]">
                     @{currentUser.username}
@@ -274,22 +275,45 @@ export default function Home() {
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#FAF8F5] dark:bg-[#121316] text-[#71717A] dark:text-[#A1A1AA] border border-[#E7E3DC] dark:border-[#26272D] uppercase">
                     {currentUser.tier}
                   </span>
-                </a>
-                <a
-                  href="/dashboard"
-                  className="hidden sm:inline-block px-3 py-1.5 rounded-full bg-[#18181B] text-white dark:bg-[#F4F1EA] dark:text-[#121316] text-xs font-mono uppercase font-semibold hover:bg-[#C84B26] dark:hover:bg-[#E05A32] dark:hover:text-white transition-colors"
-                >
-                  Dashboard
-                </a>
-                <button
-                  onClick={async () => {
-                    await logoutUser();
-                    setCurrentUser(null);
-                  }}
-                  className="text-xs font-medium text-[#71717A] hover:text-[#C84B26] dark:text-[#A1A1AA] dark:hover:text-[#E05A32] transition-colors cursor-pointer"
-                >
-                  Log out
+                  <svg
+                    className={`w-3.5 h-3.5 text-[#71717A] transition-transform duration-200 ${userMenuOpen ? "rotate-180" : ""}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
                 </button>
+
+                {userMenuOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-[#1A1B20] rounded-2xl shadow-xl border border-[#E7E3DC] dark:border-[#26272D] p-1.5 z-50 text-xs font-mono">
+                    <a
+                      href="/dashboard"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="block px-3 py-2 rounded-xl text-[#18181B] dark:text-[#F4F1EA] hover:bg-[#FAF8F5] dark:hover:bg-[#25272F] transition-colors"
+                    >
+                      Dashboard
+                    </a>
+                    <a
+                      href="/account-info"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="block px-3 py-2 rounded-xl text-[#18181B] dark:text-[#F4F1EA] hover:bg-[#FAF8F5] dark:hover:bg-[#25272F] transition-colors"
+                    >
+                      Account Info
+                    </a>
+                    <div className="my-1 border-t border-[#E7E3DC] dark:border-[#26272D]" />
+                    <button
+                      onClick={async () => {
+                        await logoutUser();
+                        setCurrentUser(null);
+                        setUserMenuOpen(false);
+                      }}
+                      className="w-full text-left px-3 py-2 rounded-xl text-red-600 dark:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="flex items-center gap-2">
@@ -426,12 +450,13 @@ export default function Home() {
 
           {/* Right Column: Hero Artwork */}
           <div className="lg:col-span-5">
-            <div className="relative rounded-2xl overflow-hidden shadow-lg border border-[#E7E3DC] dark:border-[#26272D] bg-[#FAF8F5] dark:bg-[#1A1B20]">
-              <div className="relative aspect-[4/5] w-full">
+            <div className="relative rounded-2xl overflow-hidden shadow-lg border border-[#E7E3DC] dark:border-[#26272D] bg-[#FAF8F5] dark:bg-[#1A1B20]" style={{ position: "relative" }}>
+              <div className="relative aspect-[4/5] w-full" style={{ position: "relative", minHeight: "450px" }}>
                 <Image
                   src="/hero-illustration.jpg"
                   alt="Atmospheric travel illustration of historic riverfront steps and lanterns at dusk"
                   fill
+                  sizes="(max-width: 1024px) 100vw, 500px"
                   className="object-cover"
                   priority
                 />

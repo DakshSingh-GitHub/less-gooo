@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { UserProfile } from "@/lib/appwrite";
 
@@ -22,6 +23,19 @@ export default function DashboardNavbar({
   sidebarOpen,
   onToggleSidebar,
 }: DashboardNavbarProps) {
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-[#FAF8F5]/90 dark:bg-[#121316]/90 backdrop-blur-md border-b border-[#E7E3DC] dark:border-[#26272D] transition-colors">
       <div className="h-full px-4 sm:px-6 flex items-center justify-between">
@@ -50,7 +64,7 @@ export default function DashboardNavbar({
           </div>
         </div>
 
-        {/* Right: Theme Toggle + User Avatar & Menu */}
+        {/* Right: Theme Toggle + Only User Account Button */}
         <div className="flex items-center gap-3">
           {/* Interactive Dark/Light Mode Toggle */}
           <button
@@ -69,27 +83,60 @@ export default function DashboardNavbar({
             )}
           </button>
 
-          {/* User Account Avatar & Dropdown */}
+          {/* User Account Dropdown (Only this is visible) */}
           {user && (
-            <div className="flex items-center gap-3 pl-2 border-l border-[#E7E3DC] dark:border-[#26272D]">
-              <div className="w-8 h-8 rounded-full bg-[#C84B26] text-white flex items-center justify-center font-mono text-xs font-bold uppercase shadow-sm">
-                {user.fullName ? user.fullName[0] : "U"}
-              </div>
-              <div className="hidden md:block text-left">
-                <span className="block text-xs font-medium text-[#18181B] dark:text-[#F4F1EA] leading-tight">
-                  {user.fullName}
-                </span>
-                <span className="block text-[10px] font-mono text-[#71717A] dark:text-[#A1A1AA]">
+            <div ref={dropdownRef} className="relative">
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#E7E3DC] dark:border-[#26272D] bg-white dark:bg-[#1A1B20] shadow-sm hover:border-[#C84B26] transition-colors cursor-pointer"
+              >
+                <div className="w-6 h-6 rounded-full bg-[#C84B26] text-white flex items-center justify-center font-mono text-[11px] font-bold uppercase">
+                  {user.fullName ? user.fullName[0] : "U"}
+                </div>
+                <span className="text-xs font-mono font-medium text-[#18181B] dark:text-[#F4F1EA]">
                   @{user.username}
                 </span>
-              </div>
-              <button
-                onClick={onLogout}
-                className="text-xs font-mono text-[#71717A] hover:text-[#C84B26] dark:text-[#A1A1AA] transition-colors cursor-pointer pl-1"
-                title="Log out"
-              >
-                Log out
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#FAF8F5] dark:bg-[#121316] text-[#71717A] dark:text-[#A1A1AA] border border-[#E7E3DC] dark:border-[#26272D] uppercase">
+                  {user.tier}
+                </span>
+                <svg
+                  className={`w-3.5 h-3.5 text-[#71717A] transition-transform duration-200 ${dropdownOpen ? "rotate-180" : ""}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
               </button>
+
+              {dropdownOpen && (
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-[#1A1B20] rounded-2xl shadow-xl border border-[#E7E3DC] dark:border-[#26272D] p-1.5 z-50 text-xs font-mono">
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setDropdownOpen(false)}
+                    className="block px-3 py-2 rounded-xl text-[#18181B] dark:text-[#F4F1EA] hover:bg-[#FAF8F5] dark:hover:bg-[#25272F] transition-colors"
+                  >
+                    Dashboard
+                  </Link>
+                  <Link
+                    href="/account-info"
+                    onClick={() => setDropdownOpen(false)}
+                    className="block px-3 py-2 rounded-xl text-[#18181B] dark:text-[#F4F1EA] hover:bg-[#FAF8F5] dark:hover:bg-[#25272F] transition-colors"
+                  >
+                    Account Info
+                  </Link>
+                  <div className="my-1 border-t border-[#E7E3DC] dark:border-[#26272D]" />
+                  <button
+                    onClick={() => {
+                      setDropdownOpen(false);
+                      onLogout();
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-xl text-red-600 dark:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -404,3 +404,46 @@ export async function getCurrentUserProfile(): Promise<{ account: any; profile: 
     return null;
   }
 }
+
+/**
+ * Update allowed user profile details in Appwrite Database & Auth
+ * Allows updating fullName, phone, state (email and username are strictly immutable)
+ */
+export async function updateUserProfile(
+  userId: string,
+  updates: { fullName?: string; phone?: string; state?: string }
+): Promise<UserProfile | null> {
+  if (updates.fullName) {
+    try {
+      await account.updateName(updates.fullName);
+    } catch (e) {
+      console.warn("Could not update name in Appwrite Auth:", e);
+    }
+  }
+
+  try {
+    const updatedDoc = await databases.updateDocument(
+      APPWRITE_DATABASE_ID,
+      APPWRITE_USERS_COLLECTION_ID,
+      userId,
+      updates
+    );
+    return updatedDoc as unknown as UserProfile;
+  } catch (err) {
+    console.warn("Could not update user in Appwrite DB:", err);
+    try {
+      const current = await getCurrentUserProfile();
+      if (current?.profile) {
+        const merged = { ...current.profile, ...updates };
+        await databases.createDocument(
+          APPWRITE_DATABASE_ID,
+          APPWRITE_USERS_COLLECTION_ID,
+          userId,
+          merged
+        );
+        return merged;
+      }
+    } catch {}
+    return null;
+  }
+}
