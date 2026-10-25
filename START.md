@@ -144,6 +144,52 @@ LessGooo adopts an **immersive, tactile, editorial travel aesthetic** inspired b
      └────────────────────────────┘    └───────────────────────────┘
 ```
 
+### 5.1. Appwrite Database Architecture & Authentication Schema
+
+We use **Appwrite Cloud** (`https://nyc.cloud.appwrite.io/v1`, Project: `6addf37400385e615d7d`) as the primary backend for identity, databases, and realtime updates.
+
+#### A. Appwrite Auth (Security & Passwords)
+* Appwrite handles password hashing and salt via internal Argon2/Bcrypt engines (`account.create`, `account.createEmailPasswordSession`). Passwords are never stored in plaintext database attributes.
+
+#### B. Database Collections (`lessgooo_db`):
+
+1. **`users` Collection** (Companion user profile document, document ID = `userId`):
+   - `userId` (string, size 36, required): Appwrite Auth `$id`
+   - `fullName` (string, size 128, required): Full name
+   - `email` (string, size 255, required): User email
+   - `phone` (string, size 20, required): Phone number with country code
+   - `state` (string, size 100, required): State / Region of origin
+   - `username` (string, size 64, required): Unique handle (e.g. `daksh_travels`)
+   - `tier` (string, size 20, default: `"free"`): Subscription tier (`"free"` | `"pro"`)
+   - `createdAt` (string, ISO format)
+
+2. **`itineraries` Collection**:
+   - `userId` (string, size 36, index)
+   - `title` (string, size 128)
+   - `status` (string, size 20: `"draft"` | `"active"` | `"completed"`)
+   - `stopsJson` (string, size 100000: Serialized `ItineraryStop[]`)
+   - `totalBudgetINR` (integer)
+   - `spentINR` (integer)
+
+3. **`expenses` Collection**:
+   - `userId` (string, size 36, index)
+   - `itineraryId` (string, size 36)
+   - `title` (string, size 128)
+   - `amountINR` (float)
+   - `category` (string, size 30: `"transit"` | `"food"` | `"stay"` | `"guide"` | `"tickets"` | `"shopping"`)
+   - `timestamp` (string, ISO)
+
+4. **`guides` Collection**:
+   - `name` (string, size 128)
+   - `languages` (string[], array of strings)
+   - `hourlyRateINR` (integer)
+   - `dailyRateINR` (integer)
+   - `phone` (string, size 20)
+   - `isGovtVerified` (boolean)
+   - `specialty` (string, size 60)
+
+---
+
 ### TypeScript Data Contracts:
 
 ```typescript

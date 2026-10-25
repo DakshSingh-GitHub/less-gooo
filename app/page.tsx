@@ -2,15 +2,34 @@
 
 import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
+import { client, getCurrentUserProfile, logoutUser, UserProfile } from "@/lib/appwrite";
+import AuthModal from "@/components/AuthModal";
 
 export default function Home() {
   const [activeDropdown, setActiveDropdown] = useState<"features" | "travelers" | "plans" | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "signup">("login");
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const navRef = useRef<HTMLDivElement>(null);
 
-  // Initialize theme from localStorage or system preference
+  // Initialize theme from localStorage or system preference and check user session
   useEffect(() => {
+    // Ping Appwrite once on start
+    client.ping().then((res) => {
+      console.log("Appwrite ping response:", res);
+    }).catch((err) => {
+      console.log("Appwrite ping response:", err);
+    });
+
+    // Check active session
+    getCurrentUserProfile().then((res) => {
+      if (res?.profile) {
+        setCurrentUser(res.profile);
+      }
+    });
+
     const savedTheme = localStorage.getItem("lessgooo-theme");
     if (savedTheme === "dark" || (!savedTheme && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
       setIsDarkMode(true);
@@ -239,21 +258,58 @@ export default function Home() {
               )}
             </button>
 
-            {/* Log In Button (Regular) */}
-            <button
-              onClick={() => alert("Login modal / redirect")}
-              className="hidden sm:inline-block px-3.5 py-2 text-sm font-medium text-[#52525B] hover:text-[#18181B] dark:text-[#A1A1AA] dark:hover:text-[#F4F1EA] transition-colors cursor-pointer"
-            >
-              Log in
-            </button>
+            {/* User Profile or Login/Signup */}
+            {currentUser ? (
+              <div className="flex items-center gap-3">
+                <a
+                  href="/dashboard"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#E7E3DC] dark:border-[#26272D] bg-white dark:bg-[#1A1B20] shadow-sm hover:border-[#C84B26] transition-colors"
+                >
+                  <div className="w-6 h-6 rounded-full bg-[#C84B26] text-white flex items-center justify-center font-mono text-[11px] font-bold uppercase">
+                    {currentUser.fullName ? currentUser.fullName[0] : "T"}
+                  </div>
+                  <span className="text-xs font-mono font-medium text-[#18181B] dark:text-[#F4F1EA]">
+                    @{currentUser.username}
+                  </span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#FAF8F5] dark:bg-[#121316] text-[#71717A] dark:text-[#A1A1AA] border border-[#E7E3DC] dark:border-[#26272D] uppercase">
+                    {currentUser.tier}
+                  </span>
+                </a>
+                <a
+                  href="/dashboard"
+                  className="hidden sm:inline-block px-3 py-1.5 rounded-full bg-[#18181B] text-white dark:bg-[#F4F1EA] dark:text-[#121316] text-xs font-mono uppercase font-semibold hover:bg-[#C84B26] dark:hover:bg-[#E05A32] dark:hover:text-white transition-colors"
+                >
+                  Dashboard
+                </a>
+                <button
+                  onClick={async () => {
+                    await logoutUser();
+                    setCurrentUser(null);
+                  }}
+                  className="text-xs font-medium text-[#71717A] hover:text-[#C84B26] dark:text-[#A1A1AA] dark:hover:text-[#E05A32] transition-colors cursor-pointer"
+                >
+                  Log out
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                {/* Log In Button (Regular) */}
+                <a
+                  href="/login"
+                  className="hidden sm:inline-block px-3.5 py-2 text-sm font-medium text-[#52525B] hover:text-[#18181B] dark:text-[#A1A1AA] dark:hover:text-[#F4F1EA] transition-colors cursor-pointer"
+                >
+                  Log in
+                </a>
 
-            {/* Sign Up Button (Emphasized) */}
-            <button
-              onClick={() => alert("Signup modal / redirect")}
-              className="px-5 py-2.5 rounded-full bg-[#18181B] text-white hover:bg-[#C84B26] dark:bg-[#F4F1EA] dark:text-[#121316] dark:hover:bg-[#E05A32] dark:hover:text-white text-xs font-semibold tracking-wide transition-colors shadow-sm cursor-pointer"
-            >
-              Sign up
-            </button>
+                {/* Sign Up Button (Emphasized) */}
+                <a
+                  href="/login"
+                  className="px-5 py-2.5 rounded-full bg-[#18181B] text-white hover:bg-[#C84B26] dark:bg-[#F4F1EA] dark:text-[#121316] dark:hover:bg-[#E05A32] dark:hover:text-white text-xs font-semibold tracking-wide transition-colors shadow-sm cursor-pointer"
+                >
+                  Sign up
+                </a>
+              </div>
+            )}
 
             {/* Mobile Hamburger Button */}
             <button
@@ -296,18 +352,40 @@ export default function Home() {
               </button>
             </div>
             <div className="pt-2 flex items-center gap-3">
-              <button
-                onClick={() => alert("Login modal / redirect")}
-                className="w-1/2 py-2.5 text-xs font-medium text-[#18181B] dark:text-[#F4F1EA] border border-[#E7E3DC] dark:border-[#26272D] rounded-full"
-              >
-                Log in
-              </button>
-              <button
-                onClick={() => alert("Signup modal / redirect")}
-                className="w-1/2 py-2.5 text-xs font-semibold text-white bg-[#18181B] dark:bg-[#F4F1EA] dark:text-[#121316] rounded-full"
-              >
-                Sign up
-              </button>
+              {currentUser ? (
+                <div className="w-full flex items-center justify-between p-2 rounded-xl bg-[#FAF8F5] dark:bg-[#121316] border border-[#E7E3DC] dark:border-[#26272D]">
+                  <span className="text-xs font-mono font-medium text-[#18181B] dark:text-[#F4F1EA]">
+                    @{currentUser.username}
+                  </span>
+                  <button
+                    onClick={async () => {
+                      await logoutUser();
+                      setCurrentUser(null);
+                      setMobileMenuOpen(false);
+                    }}
+                    className="text-xs text-[#C84B26] font-medium"
+                  >
+                    Log out
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <a
+                    href="/login"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="w-1/2 py-2.5 text-center text-xs font-medium text-[#18181B] dark:text-[#F4F1EA] border border-[#E7E3DC] dark:border-[#26272D] rounded-full"
+                  >
+                    Log in
+                  </a>
+                  <a
+                    href="/login"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="w-1/2 py-2.5 text-center text-xs font-semibold text-white bg-[#18181B] dark:bg-[#F4F1EA] dark:text-[#121316] rounded-full"
+                  >
+                    Sign up
+                  </a>
+                </>
+              )}
             </div>
           </div>
         )}
@@ -631,6 +709,16 @@ export default function Home() {
           </div>
         </div>
       </footer>
+      {/* AUTH MODAL */}
+      <AuthModal
+        isOpen={authModalOpen}
+        initialMode={authMode}
+        onClose={() => setAuthModalOpen(false)}
+        onSuccess={(profile) => {
+          setCurrentUser(profile);
+          setAuthModalOpen(false);
+        }}
+      />
     </div>
   );
 }
