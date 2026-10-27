@@ -23,6 +23,7 @@ import DashboardSidebar, { SidebarView } from "@/components/dashboard/DashboardS
 import ActiveTripCard from "@/components/dashboard/ActiveTripCard";
 import TripCreateForm from "@/components/dashboard/TripCreateForm";
 import UpcomingTripsView from "@/components/dashboard/UpcomingTripsView";
+import CompletedTripsView from "@/components/dashboard/CompletedTripsView";
 import ExpenseManagerView from "@/components/dashboard/ExpenseManagerView";
 import DiscoverView from "@/components/dashboard/DiscoverView";
 import FeedView from "@/components/dashboard/FeedView";
@@ -60,11 +61,15 @@ export default function DashboardPage() {
       setUser(cachedUser);
       setAuthChecking(false); // Instantly unlock dashboard with zero loading delay!
 
-      // Preload locally cached trips and feed posts immediately
+      // Preload locally cached trips, expenses, and feed posts immediately
       try {
         const cachedTripsRaw = localStorage.getItem(`lessgooo_trips_${cachedUser.userId}`);
         if (cachedTripsRaw) {
           setTrips(JSON.parse(cachedTripsRaw));
+        }
+        const cachedExpensesRaw = localStorage.getItem(`lessgooo_expenses_${cachedUser.userId}`);
+        if (cachedExpensesRaw) {
+          setExpenses(JSON.parse(cachedExpensesRaw));
         }
         const cachedPostsRaw = localStorage.getItem("lessgooo_feed_posts");
         if (cachedPostsRaw) {
@@ -127,11 +132,7 @@ export default function DashboardPage() {
   // Only one trip can have status === 'active'
   const activeTrip = trips.find((t) => t.status === "active") || null;
   const upcomingTrips = trips.filter((t) => t.status === "upcoming");
-
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 5000);
-  };
+  const completedTrips = trips.filter((t) => t.status === "completed");
 
   // Handle New Trip Created
   const handleTripCreated = (createdTrip: Trip) => {
@@ -142,15 +143,13 @@ export default function DashboardPage() {
       );
       setTrips([createdTrip, ...updatedTrips]);
       setCurrentView("active-trip");
-      showToast(`Active trip "${createdTrip.title}" initialized.`);
     } else {
       setTrips([createdTrip, ...trips]);
       setCurrentView("upcoming-trips");
-      showToast(`Trip "${createdTrip.title}" scheduled.`);
     }
   };
 
-  // Handle Set Trip Active
+  // Handle Set Trip Active (Promote upcoming or completed trip to active)
   const handleSetTripActive = async (tripId: string) => {
     if (!user?.userId) return;
 
@@ -168,16 +167,41 @@ export default function DashboardPage() {
 
     setTrips(updated);
     setCurrentView("active-trip");
-    showToast("Trip promoted to Active. Previous active trip transitioned to upcoming.");
   };
 
-  // Handle Complete Trip
-  const handleCompleteTrip = async (tripId: string) => {
+  // Handle Complete Trip with Date Override
+  const handleCompleteTrip = async (tripId: string, overrideEndDate?: string) => {
+    const today = new Date().toISOString().split("T")[0];
+    const finalEndDate = overrideEndDate || today;
+
+    if (user?.userId) {
+      const { updateTripInDb } = await import("@/lib/appwrite");
+      await updateTripInDb(tripId, user.userId, {
+        status: "completed",
+        endDate: finalEndDate,
+      });
+    }
+
     const updated = trips.map((t) =>
-      (t.$id || t.id) === tripId ? { ...t, status: "completed" as const, updatedAt: new Date().toISOString() } : t
+      (t.$id || t.id) === tripId
+        ? {
+            ...t,
+            status: "completed" as const,
+            endDate: finalEndDate,
+            updatedAt: new Date().toISOString(),
+          }
+        : t
     );
     setTrips(updated);
-    showToast("Trip marked as completed.");
+    // Transition user directly to Completed Trips view so they see the completed trip immediately!
+    setCurrentView("completed-trips");
+  };
+
+  // Handle Update Trip (Settings, Plan Specifications, Proposed Plan)
+  const handleUpdateTrip = (updatedTrip: Trip) => {
+    setTrips((prev) =>
+      prev.map((t) => ((t.$id || t.id) === (updatedTrip.$id || updatedTrip.id) ? updatedTrip : t))
+    );
   };
 
   // Handle Add Expense
@@ -195,13 +219,28 @@ export default function DashboardPage() {
 
     setExpenses([newEntry, ...expenses]);
     await addExpenseToDb(newEntry);
-    showToast(`Expense of ${activeTrip?.currency || "₹"} ${data.amountINR} recorded.`);
+  };
+
+  // Handle Sync Transit Expenses (Inbound & Outbound Non-Stacking In-Place Update)
+  const handleSyncTransitExpenses = async (
+    approaching: { title: string; amountINR: number },
+    departure: { title: string; amountINR: number }
+  ) => {
+    if (!user?.userId || !activeTrip) return;
+    const tripId = activeTrip.$id || activeTrip.id || "";
+    const { syncTransitExpensesInDb } = await import("@/lib/appwrite");
+    const updatedExpenses = await syncTransitExpensesInDb(
+      user.userId,
+      tripId,
+      approaching,
+      departure
+    );
+    setExpenses(updatedExpenses);
   };
 
   // Handle Post Created
   const handlePostCreated = (newPost: Post) => {
     setPosts((prev) => [newPost, ...prev]);
-    showToast("Dispatch published to community feed.");
   };
 
   // Handle Post Updated (Likes, etc.)
@@ -214,7 +253,6 @@ export default function DashboardPage() {
   // Handle Post Deleted (Owner only)
   const handlePostDeleted = (postId: string) => {
     setPosts((prev) => prev.filter((p) => (p.$id || p.id) !== postId));
-    showToast("Post deleted from community feed.");
   };
 
   // Dynamic Breadcrumb Label
@@ -224,6 +262,8 @@ export default function DashboardPage() {
         return activeTrip ? activeTrip.title : "Active Trip";
       case "upcoming-trips":
         return `Upcoming Trips (${upcomingTrips.length})`;
+      case "completed-trips":
+        return `Completed Trips (${completedTrips.length})`;
       case "new-trip":
         return "New Trip Plan";
       case "expenses":
@@ -273,28 +313,13 @@ export default function DashboardPage() {
           onSelectView={setCurrentView}
           activeTrip={activeTrip}
           upcomingTripsCount={upcomingTrips.length}
+          completedTripsCount={completedTrips.length}
           isOpen={sidebarOpen}
           onCloseMobile={() => setSidebarOpen(false)}
         />
 
         {/* Right Section: Dynamic Main Content Workspace */}
         <main className="flex-1 md:pl-72 p-6 sm:p-10 max-w-7xl mx-auto w-full transition-all">
-          {/* Toast Notification */}
-          {toastMessage && (
-            <div className="mb-6 p-4 rounded-2xl bg-white dark:bg-[#1A1B20] border border-[#C84B26]/40 dark:border-[#E05A32]/40 shadow-sm flex items-center justify-between text-xs font-mono text-[#18181B] dark:text-[#F4F1EA] animate-fadeIn">
-              <div className="flex items-center gap-2">
-                <span className="text-[#C84B26] dark:text-[#E05A32] font-bold">●</span>
-                <span>{toastMessage}</span>
-              </div>
-              <button
-                onClick={() => setToastMessage(null)}
-                className="text-[#71717A] hover:text-[#18181B] dark:hover:text-white"
-              >
-                ✕
-              </button>
-            </div>
-          )}
-
           {/* Dynamic Workspace Views */}
           {currentView === "active-trip" && (
             <div className="space-y-6">
@@ -303,6 +328,9 @@ export default function DashboardPage() {
                 onNewTripClick={() => setCurrentView("new-trip")}
                 onCompleteTrip={handleCompleteTrip}
                 onLogExpenseClick={() => setCurrentView("expenses")}
+                onUpdateTrip={handleUpdateTrip}
+                onAddExpenseAuto={handleAddExpense}
+                onSyncTransitExpenses={handleSyncTransitExpenses}
               />
             </div>
           )}
@@ -320,6 +348,16 @@ export default function DashboardPage() {
           {currentView === "upcoming-trips" && (
             <div className="space-y-6">
               <UpcomingTripsView
+                trips={trips}
+                onSetTripActive={handleSetTripActive}
+                onNewTripClick={() => setCurrentView("new-trip")}
+              />
+            </div>
+          )}
+
+          {currentView === "completed-trips" && (
+            <div className="space-y-6">
+              <CompletedTripsView
                 trips={trips}
                 onSetTripActive={handleSetTripActive}
                 onNewTripClick={() => setCurrentView("new-trip")}

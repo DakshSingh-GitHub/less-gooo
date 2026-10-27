@@ -36,6 +36,65 @@ export default function ExpenseManagerView({
     ? expenses
     : expenses.filter((e) => e.category === selectedFilter);
 
+  // If no active trip exists, strictly show "No Active Trips"
+  if (!activeTrip || activeTrip.status !== "active") {
+    return (
+      <div className="space-y-6">
+        <div className="pb-4 border-b border-[#E7E3DC] dark:border-[#26272D]">
+          <span className="text-[10px] font-mono uppercase tracking-widest text-[#C84B26] dark:text-[#E05A32] block">
+            Financial Ledger
+          </span>
+          <h2 className="font-serif text-3xl text-[#18181B] dark:text-[#F4F1EA]">
+            Expense Manager
+          </h2>
+        </div>
+
+        <div className="p-12 text-center rounded-3xl bg-white dark:bg-[#1A1B20] border border-dashed border-[#E7E3DC] dark:border-[#26272D] space-y-4">
+          <div className="w-12 h-12 rounded-2xl bg-[#FAF8F5] dark:bg-[#121316] border border-[#E7E3DC] dark:border-[#26272D] flex items-center justify-center mx-auto text-[#71717A]">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div className="space-y-1">
+            <h3 className="font-serif text-2xl text-[#18181B] dark:text-[#F4F1EA]">
+              No Active Trips
+            </h3>
+            <p className="text-xs text-[#71717A] dark:text-[#A1A1AA] max-w-sm mx-auto font-light">
+              The Expense Manager requires an ongoing journey to track allocated budget runway, transit fares, and category limits. Please activate a trip from your schedule to start logging expenses.
+            </p>
+          </div>
+          <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 font-mono text-[11px] font-medium">
+            Status: No Active Trips
+          </div>
+        </div>
+
+        {expenses.length > 0 && (
+          <div className="space-y-4 pt-4">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono uppercase tracking-wider text-[#71717A]">
+                Historical Expense Records ({expenses.length})
+              </span>
+              <span className="text-xs font-mono font-semibold text-[#18181B] dark:text-[#F4F1EA]">
+                Total: ₹{totalSpent.toLocaleString()}
+              </span>
+            </div>
+            <div className="divide-y divide-[#E7E3DC] dark:divide-[#26272D] bg-white dark:bg-[#1A1B20] rounded-2xl border border-[#E7E3DC] dark:border-[#26272D] overflow-hidden">
+              {expenses.slice(0, 5).map((exp, idx) => (
+                <div key={idx} className="p-4 flex items-center justify-between font-mono text-xs">
+                  <div>
+                    <span className="font-medium text-[#18181B] dark:text-[#F4F1EA] block">{exp.title}</span>
+                    <span className="text-[10px] text-[#71717A] uppercase">{exp.category} • {exp.timestamp}</span>
+                  </div>
+                  <span className="font-semibold text-[#C84B26]">₹{exp.amountINR.toLocaleString()}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const parsed = parseFloat(amount);

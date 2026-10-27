@@ -3,7 +3,7 @@
 > **CONSTRUCT 2.0 — Ideathon & Build Track A**  
 > **Team:** Trendly *(Daksh Singh, Tripti Kaushik, Anant Raj, Ananya Nandinii, Vinayak Agrawal)*  
 > **Institution:** NST Rishihood University  
-> **Platform Stack:** Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS, Google Gemini Models  
+> **Platform Stack:** Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS, Autonomous Intelligence Engine  
 > **Target Pilot Destination:** Varanasi (Scalable Pan-India & Globally)
 
 ---
@@ -16,7 +16,7 @@ Most travellers juggle 4–6 disconnected apps (Maps, TripAdvisor, ride hailing,
 1. **Time & Traffic Dwell Engine**: If you linger longer at a spot or hit congestion, your itinerary automatically recalibrates downstream stops without stress.
 2. **Transit Fare Shield & Budgeting**: Instant benchmark fare brackets for autos, e-rickshaws, and cabs, backed by real-time expense tracking.
 3. **Inclusive Human Support**: Verified local guide hiring & allotment with an elegant, tactile Senior Companion mode.
-4. **Clean Tiering**: Free exploration powered by lightweight Gemini models; Pro tier unlocking live autonomous replanning and fare benchmarks.
+4. **Clean Tiering**: Free exploration powered by lightweight autonomous models; Pro tier unlocking live autonomous replanning and fare benchmarks.
 
 ---
 
@@ -115,7 +115,7 @@ LessGooo adopts an **immersive, tactile, editorial travel aesthetic** inspired b
 | Capability | Free Explorer Tier | Pro Tier (`LessGooo+`) |
 | :--- | :--- | :--- |
 | **Itinerary Generation** | Full personalized multi-day plan | Priority crowd-optimized sequencing |
-| **Conversational Assistant** | **Gemini Flash Lite** (super fast, low cost) | **Gemini Flash / Pro** (in-depth cultural deep-dives) |
+| **Conversational Assistant** | **High-speed Engine** (super fast, low cost) | **Deep Reasoning Engine** (in-depth cultural deep-dives) |
 | **Schedule Re-alignment** | Manual refresh button on delay | **Autonomous real-time auto-replanner** |
 | **Transit Fare Shield** | Basic estimated transit distances | **Dynamic auto/cab price brackets + negotiation tips** |
 | **Expense Tracker** | Standard spend logging & category split | Budget pacing insights & overspend alerts |
@@ -137,7 +137,7 @@ LessGooo adopts an **immersive, tactile, editorial travel aesthetic** inspired b
      ┌────────────────────────────┐    ┌───────────────────────────┐
      │      Client Services       │    │     AI / Edge Engine      │
      ├────────────────────────────┤    ├───────────────────────────┤
-     │ • Itinerary State Manager  │    │ • Gemini Flash Lite SDK   │
+     │ • Itinerary State Manager  │    │ • Autonomous Planning Engine│
      │ • Traffic / Dwell Monitor  │    │ • Dynamic Schedule Solver │
      │ • Fare Matrix Calculator   │    │ • Guide Allotment Matcher │
      │ • Expense Ledger Engine    │    │                           │
@@ -266,6 +266,6 @@ export interface ExpenseEntry {
 - [ ] Build **Local Guide Marketplace**: Card layout with verified credentials, specialty badges, pricing, and 1-tap booking simulation.
 - [ ] Build **Senior Mode Interface**: Focused, large-print, step-by-step waypoint view with direct guide calling button.
 
-### Phase 5: AI Travel Concierge (Gemini Flash Lite) & Pitch Polish
+### Phase 5: Travel Concierge Engine & Pitch Polish
 - [ ] Integrate lightweight AI conversational assistant for quick local questions.
 - [ ] Rehearse judge demonstration flow (Scenario: Delay at Temple $\to$ Auto-replanning $\to$ Auto fare shield $\to$ Guide allotment).

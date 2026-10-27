@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Trip } from "@/lib/appwrite";
 
 interface TripCreateFormProps {
@@ -23,6 +23,9 @@ export default function TripCreateForm({
   onCancel,
 }: TripCreateFormProps) {
   const [title, setTitle] = useState("");
+  const [fromLocation, setFromLocation] = useState("");
+  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+  const [locationStatus, setLocationStatus] = useState<string | null>(null);
   const [destination, setDestination] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -33,6 +36,63 @@ export default function TripCreateForm({
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Auto-detect current location
+  const detectLocation = () => {
+    if (typeof window === "undefined" || !navigator.geolocation) {
+      setLocationStatus("Geolocation is not supported by your browser");
+      return;
+    }
+
+    setIsDetectingLocation(true);
+    setLocationStatus("Detecting coordinates...");
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+            { headers: { "Accept-Language": "en" } }
+          );
+          if (res.ok) {
+            const data = await res.json();
+            const city =
+              data.address?.city ||
+              data.address?.town ||
+              data.address?.village ||
+              data.address?.suburb ||
+              data.address?.county;
+            const state = data.address?.state;
+            const country = data.address?.country;
+            const placeString = [city, state, country].filter(Boolean).join(", ");
+            if (placeString) {
+              setFromLocation(placeString);
+              setLocationStatus("Auto-filled from GPS");
+              setIsDetectingLocation(false);
+              return;
+            }
+          }
+        } catch {}
+        setFromLocation(`${latitude.toFixed(3)}°N, ${longitude.toFixed(3)}°E`);
+        setLocationStatus("GPS coordinates captured");
+        setIsDetectingLocation(false);
+      },
+      (err) => {
+        setIsDetectingLocation(false);
+        if (err.code === err.PERMISSION_DENIED) {
+          setLocationStatus("Permission denied. Set location manually.");
+        } else {
+          setLocationStatus("Could not detect location. Set manually.");
+        }
+      },
+      { timeout: 8000, enableHighAccuracy: false }
+    );
+  };
+
+  useEffect(() => {
+    detectLocation();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,6 +114,7 @@ export default function TripCreateForm({
       const payload: Omit<Trip, "$id"> = {
         userId,
         title: title.trim(),
+        from: fromLocation.trim() || "Current Location",
         destination: destination.trim(),
         startDate,
         endDate,
@@ -106,20 +167,61 @@ export default function TripCreateForm({
       )}
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Row 1: Title & Destination */}
+        {/* Row 1: Trip Title */}
+        <div>
+          <label className="block text-xs font-mono uppercase text-[#71717A] dark:text-[#A1A1AA] tracking-wider mb-1">
+            Trip Title *
+          </label>
+          <input
+            type="text"
+            required
+            placeholder="e.g. Coastal Heritage Tour / Kashi Spiritual Sojourn"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="w-full h-11 px-3.5 rounded-xl border border-[#E7E3DC] dark:border-[#26272D] bg-[#FAF8F5] dark:bg-[#121316] text-[#18181B] dark:text-[#F4F1EA] text-sm focus:outline-none focus:border-[#C84B26]"
+          />
+        </div>
+
+        {/* Row 2: From (Origin) & Destination */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-mono uppercase text-[#71717A] dark:text-[#A1A1AA] tracking-wider mb-1">
-              Trip Title *
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="e.g. Coastal Heritage Tour"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full h-11 px-3.5 rounded-xl border border-[#E7E3DC] dark:border-[#26272D] bg-[#FAF8F5] dark:bg-[#121316] text-[#18181B] dark:text-[#F4F1EA] text-sm focus:outline-none focus:border-[#C84B26]"
-            />
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs font-mono uppercase text-[#71717A] dark:text-[#A1A1AA] tracking-wider">
+                From (Starting Location) *
+              </label>
+              <button
+                type="button"
+                onClick={detectLocation}
+                disabled={isDetectingLocation}
+                className="text-[10px] font-mono text-[#C84B26] hover:text-[#B33F1D] flex items-center gap-1 cursor-pointer"
+              >
+                <svg className={`w-3 h-3 ${isDetectingLocation ? "animate-spin" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span>{isDetectingLocation ? "Detecting..." : "Detect Location"}</span>
+              </button>
+            </div>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="e.g. New Delhi, India"
+                value={fromLocation}
+                onChange={(e) => {
+                  setFromLocation(e.target.value);
+                  setLocationStatus("Manually specified");
+                }}
+                className="w-full h-11 px-3.5 pr-8 rounded-xl border border-[#E7E3DC] dark:border-[#26272D] bg-[#FAF8F5] dark:bg-[#121316] text-[#18181B] dark:text-[#F4F1EA] text-sm focus:outline-none focus:border-[#C84B26]"
+              />
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-[#71717A]">
+                📍
+              </div>
+            </div>
+            {locationStatus && (
+              <span className="text-[10px] font-mono text-[#71717A] dark:text-[#A1A1AA] mt-1 block">
+                {locationStatus}
+              </span>
+            )}
           </div>
 
           <div>
@@ -129,7 +231,7 @@ export default function TripCreateForm({
             <input
               type="text"
               required
-              placeholder="e.g. Jaipur, Rajasthan"
+              placeholder="e.g. Varanasi, Uttar Pradesh"
               value={destination}
               onChange={(e) => setDestination(e.target.value)}
               className="w-full h-11 px-3.5 rounded-xl border border-[#E7E3DC] dark:border-[#26272D] bg-[#FAF8F5] dark:bg-[#121316] text-[#18181B] dark:text-[#F4F1EA] text-sm focus:outline-none focus:border-[#C84B26]"

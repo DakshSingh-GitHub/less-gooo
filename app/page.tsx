@@ -228,7 +228,7 @@ export default function Home() {
                   >
                     <div className="font-medium text-[#18181B] dark:text-[#F4F1EA] text-sm">Free Explorer</div>
                     <div className="text-xs text-[#71717A] dark:text-[#A1A1AA] mt-0.5 leading-normal">
-                      Personalized travel plans and conversational assistance with Flash Lite.
+                      Personalized travel plans and ambient conversational assistance.
                     </div>
                   </a>
                   <a
@@ -669,7 +669,7 @@ export default function Home() {
               </li>
               <li className="flex items-start gap-2.5">
                 <span className="text-[#C84B26] dark:text-[#E05A32] font-bold">—</span>
-                <span>AI model chat powered by <strong>Flash Lite</strong> for rapid Q&A and cultural insights</span>
+                <span>Intelligent journey companion for rapid Q&A and cultural insights</span>
               </li>
               <li className="flex items-start gap-2.5">
                 <span className="text-[#C84B26] dark:text-[#E05A32] font-bold">—</span>

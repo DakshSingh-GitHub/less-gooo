@@ -2,13 +2,14 @@
 
 import { Trip } from "@/lib/appwrite";
 
-export type SidebarView = "active-trip" | "upcoming-trips" | "new-trip" | "expenses" | "discover" | "feed" | "settings";
+export type SidebarView = "active-trip" | "upcoming-trips" | "completed-trips" | "new-trip" | "expenses" | "discover" | "feed" | "settings";
 
 interface DashboardSidebarProps {
   currentView: SidebarView;
   onSelectView: (view: SidebarView) => void;
   activeTrip: Trip | null;
   upcomingTripsCount: number;
+  completedTripsCount: number;
   isOpen: boolean;
   onCloseMobile: () => void;
 }
@@ -18,6 +19,7 @@ export default function DashboardSidebar({
   onSelectView,
   activeTrip,
   upcomingTripsCount,
+  completedTripsCount,
   isOpen,
   onCloseMobile,
 }: DashboardSidebarProps) {
@@ -74,7 +76,7 @@ export default function DashboardSidebar({
                 <span>Active Trip</span>
               </div>
               {activeTrip ? (
-                <span className="w-2 h-2 rounded-full bg-emerald-500" title="Active Trip Ongoing" />
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
               ) : (
                 <span className="text-[10px] text-[#A1A1AA] lowercase font-sans">none</span>
               )}
@@ -97,6 +99,26 @@ export default function DashboardSidebar({
               </div>
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#FAF8F5] dark:bg-[#121316] border border-[#E7E3DC] dark:border-[#26272D] text-[#71717A] dark:text-[#A1A1AA]">
                 {upcomingTripsCount}
+              </span>
+            </button>
+
+            {/* 3. Completed Trips */}
+            <button
+              onClick={() => handleNavClick("completed-trips")}
+              className={`w-full flex items-center justify-between p-3 rounded-xl text-xs font-mono uppercase tracking-wider transition-colors cursor-pointer ${
+                currentView === "completed-trips"
+                  ? "bg-white dark:bg-[#1A1B20] text-[#C84B26] dark:text-[#E05A32] font-semibold shadow-sm border border-[#E7E3DC] dark:border-[#26272D]"
+                  : "text-[#71717A] dark:text-[#A1A1AA] hover:text-[#18181B] dark:hover:text-[#F4F1EA] hover:bg-black/[0.02] dark:hover:bg-white/[0.02]"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Completed Trips</span>
+              </div>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#FAF8F5] dark:bg-[#121316] border border-[#E7E3DC] dark:border-[#26272D] text-[#71717A] dark:text-[#A1A1AA]">
+                {completedTripsCount}
               </span>
             </button>
 

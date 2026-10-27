@@ -3,8 +3,8 @@ import { Client, Account, Databases, ID, Query } from "appwrite";
 const APPWRITE_ENDPOINT = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT || "https://nyc.cloud.appwrite.io/v1";
 const APPWRITE_PROJECT_ID = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID || "6addf37400385e615d7d";
 
-export const APPWRITE_DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID || "lessgooo_db";
-export const APPWRITE_USERS_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_USERS_COLLECTION_ID || "users";
+export const APPWRITE_DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID || "6addf6920037cf1f242e";
+export const APPWRITE_USERS_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_USERS_COLLECTION_ID || "6addf762000aef39ee91";
 export const APPWRITE_TRIPS_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_TRIPS_COLLECTION_ID || "trips";
 export const APPWRITE_ITINERARIES_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_ITINERARIES_COLLECTION_ID || "itineraries";
 export const APPWRITE_EXPENSES_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_EXPENSES_COLLECTION_ID || "expenses";
@@ -19,11 +19,107 @@ export const account = new Account(client);
 export const databases = new Databases(client);
 export { client, ID, Query };
 
+const warnedCollections = new Set<string>();
+
+export function isCollectionNotFoundError(err: any): boolean {
+  return (
+    err?.code === 404 ||
+    err?.type === "collection_not_found" ||
+    (typeof err?.message === "string" &&
+      err.message.toLowerCase().includes("collection with the requested id"))
+  );
+}
+
+export function logAppwriteNotice(context: string, collectionId: string, err: any) {
+  if (isCollectionNotFoundError(err)) {
+    if (!warnedCollections.has(collectionId)) {
+      warnedCollections.add(collectionId);
+      console.info(
+        `ℹ️ [Appwrite Notice] Collection '${collectionId}' is not yet created in Appwrite Database. Seamlessly utilizing local cache.`
+      );
+    }
+    return;
+  }
+  console.warn(`${context}:`, err);
+}
+
+export type TransitMode = "flight" | "train" | "cab" | "self_car";
+
+export interface SingleLegTransitCost {
+  mode: TransitMode;
+  direction: "approaching" | "departure";
+  directionLabel: string;
+  from: string;
+  to: string;
+  distanceKm: number;
+  fuelCost?: number;
+  fuelLiters?: number;
+  tollCost?: number;
+  ticketPricePerPerson?: number;
+  passengersCount: number;
+  totalCost: number;
+  summaryText: string;
+}
+
+export interface TransitCostBreakdown {
+  mode: TransitMode;
+  distanceKm: number;
+  roundTripDistanceKm: number;
+  fuelCost?: number;
+  tollCost?: number;
+  ticketPricePerPerson?: number;
+  passengersCount: number;
+  roundTripTotal: number;
+  summaryText: string;
+}
+
+export interface PlanSpecifications {
+  pace: "relaxed" | "moderate" | "intensive";
+  includeRestaurants: boolean;
+  dietaryPreference: "pure_veg" | "all";
+  cuisineTypes: string[];
+  touristPreferences: string[];
+  stayType: string;
+  includeStayRest: boolean;
+  approachingTransitMode: TransitMode;
+  departureTransitMode: TransitMode;
+  passengersCount: number;
+  approachingCarFuelType?: "petrol" | "diesel" | "ev";
+  departureCarFuelType?: "petrol" | "diesel" | "ev";
+  transitMode?: TransitMode;
+  carFuelType?: "petrol" | "diesel" | "ev";
+  necessities: {
+    hospital: boolean;
+    medicalStore: boolean;
+    atm: boolean;
+    restrooms: boolean;
+  };
+}
+
+export interface ProposedPlanStop {
+  time: string;
+  title: string;
+  category: "sightseeing" | "food" | "culture" | "rest" | "medical" | "transit";
+  description: string;
+  location?: string;
+  isPureVeg?: boolean;
+  transitNote?: string;
+  estimatedCost?: string;
+}
+
+export interface ProposedPlanDay {
+  dayNumber: number;
+  date: string;
+  theme: string;
+  stops: ProposedPlanStop[];
+}
+
 export interface Trip {
   $id?: string;
   id?: string;
   userId: string;
   title: string;
+  from?: string;
   destination: string;
   startDate: string;
   endDate: string;
@@ -32,6 +128,12 @@ export interface Trip {
   currency: string;
   status: "draft" | "upcoming" | "active" | "completed";
   notes?: string;
+  specifications?: PlanSpecifications;
+  proposedPlan?: ProposedPlanDay[];
+  estimatedTicketCost?: number;
+  estimatedTransitCost?: TransitCostBreakdown;
+  approachingTransitCost?: SingleLegTransitCost;
+  departureTransitCost?: SingleLegTransitCost;
   createdAt: string;
   updatedAt: string;
 }
@@ -77,22 +179,32 @@ export interface GuideItem {
   isGovtVerified: boolean;
 }
 
-// Add an expense to Appwrite (with fallback error handling)
-export async function addExpenseToDb(expense: Omit<ExpenseItem, "$id">) {
+// Add an expense to Appwrite (with offline local storage fallback)
+export async function addExpenseToDb(expense: Omit<ExpenseItem, "$id">): Promise<ExpenseItem> {
+  const localExpense: ExpenseItem = {
+    $id: "exp_" + Date.now(),
+    id: "exp_" + Date.now(),
+    ...expense,
+  };
+
   try {
-    return await databases.createDocument(
+    const doc = await databases.createDocument(
       APPWRITE_DATABASE_ID,
       APPWRITE_EXPENSES_COLLECTION_ID,
       ID.unique(),
       expense
     );
+    const saved = doc as unknown as ExpenseItem;
+    syncExpenseToLocalStorage(saved);
+    return saved;
   } catch (err) {
-    console.warn("Could not save expense to Appwrite DB (check collection settings):", err);
-    return null;
+    // If Appwrite database is not found or not initialized, seamlessly persist locally
+    syncExpenseToLocalStorage(localExpense);
+    return localExpense;
   }
 }
 
-// Fetch user's expenses
+// Fetch user's expenses with local cache fallback
 export async function fetchUserExpenses(userId: string): Promise<ExpenseItem[]> {
   try {
     const res = await databases.listDocuments(
@@ -100,11 +212,118 @@ export async function fetchUserExpenses(userId: string): Promise<ExpenseItem[]> 
       APPWRITE_EXPENSES_COLLECTION_ID,
       [Query.equal("userId", userId), Query.orderDesc("timestamp")]
     );
-    return res.documents as unknown as ExpenseItem[];
+    const items = res.documents as unknown as ExpenseItem[];
+    if (typeof window !== "undefined" && items.length > 0) {
+      localStorage.setItem(`lessgooo_expenses_${userId}`, JSON.stringify(items));
+    }
+    return items;
   } catch (err) {
-    console.warn("Could not load expenses from Appwrite DB:", err);
+    if (typeof window !== "undefined") {
+      const cached = localStorage.getItem(`lessgooo_expenses_${userId}`);
+      if (cached) {
+        try {
+          return JSON.parse(cached);
+        } catch {}
+      }
+    }
     return [];
   }
+}
+
+function syncExpenseToLocalStorage(expense: ExpenseItem) {
+  if (typeof window === "undefined") return;
+  try {
+    const key = `lessgooo_expenses_${expense.userId}`;
+    const existing: ExpenseItem[] = JSON.parse(localStorage.getItem(key) || "[]");
+    const updated = [expense, ...existing.filter((e) => (e.$id || e.id) !== (expense.$id || expense.id))];
+    localStorage.setItem(key, JSON.stringify(updated));
+  } catch {}
+}
+
+/**
+ * Update or Insert approaching & departure transit expenses in DB & local cache.
+ * Ensures transit costs NEVER stack up or duplicate upon plan regeneration.
+ */
+export async function syncTransitExpensesInDb(
+  userId: string,
+  tripId: string,
+  approaching: { title: string; amountINR: number },
+  departure: { title: string; amountINR: number }
+): Promise<ExpenseItem[]> {
+  const nowTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+  const existingExpenses = await fetchUserExpenses(userId);
+
+  // Filter out any previous transit expenses for this trip to prevent stacking/pile-up
+  const filtered = existingExpenses.filter((exp) => {
+    if (exp.tripId === tripId && exp.category === "transit") {
+      return false; // Safely replace all previous transit records for this trip
+    }
+    return true;
+  });
+
+  // Attempt to delete old transit documents from Appwrite DB for this trip if they had a document ID
+  for (const oldExp of existingExpenses) {
+    if (oldExp.tripId === tripId && oldExp.category === "transit") {
+      const docId = oldExp.$id;
+      if (docId && !docId.startsWith("exp_")) {
+        try {
+          await databases.deleteDocument(APPWRITE_DATABASE_ID, APPWRITE_EXPENSES_COLLECTION_ID, docId).catch(() => {});
+        } catch {}
+      }
+    }
+  }
+
+  const approachingItem: ExpenseItem = {
+    $id: "exp_app_" + Date.now(),
+    id: "exp_app_" + Date.now(),
+    userId,
+    tripId,
+    title: approaching.title,
+    amountINR: approaching.amountINR,
+    category: "transit",
+    timestamp: nowTime,
+  };
+
+  const departureItem: ExpenseItem = {
+    $id: "exp_dep_" + (Date.now() + 1),
+    id: "exp_dep_" + (Date.now() + 1),
+    userId,
+    tripId,
+    title: departure.title,
+    amountINR: departure.amountINR,
+    category: "transit",
+    timestamp: nowTime,
+  };
+
+  const newExpensesList = [approachingItem, departureItem, ...filtered];
+
+  // Save to local storage cache immediately
+  if (typeof window !== "undefined") {
+    localStorage.setItem(`lessgooo_expenses_${userId}`, JSON.stringify(newExpensesList));
+  }
+
+  // Attempt sync to Appwrite DB if database collection exists
+  try {
+    await databases.createDocument(APPWRITE_DATABASE_ID, APPWRITE_EXPENSES_COLLECTION_ID, ID.unique(), {
+      userId,
+      tripId,
+      title: approaching.title,
+      amountINR: approaching.amountINR,
+      category: "transit",
+      timestamp: nowTime,
+    }).catch(() => {});
+    await databases.createDocument(APPWRITE_DATABASE_ID, APPWRITE_EXPENSES_COLLECTION_ID, ID.unique(), {
+      userId,
+      tripId,
+      title: departure.title,
+      amountINR: departure.amountINR,
+      category: "transit",
+      timestamp: nowTime,
+    }).catch(() => {});
+  } catch {}
+
+  return newExpensesList;
 }
 
 export interface ItineraryDocument {
@@ -127,7 +346,7 @@ export async function fetchUserItineraries(userId: string): Promise<ItineraryDoc
     );
     return res.documents as unknown as ItineraryDocument[];
   } catch (err) {
-    console.warn("Could not fetch itineraries from Appwrite DB:", err);
+    logAppwriteNotice("Could not fetch itineraries from Appwrite DB", APPWRITE_ITINERARIES_COLLECTION_ID, err);
     return [];
   }
 }
@@ -141,7 +360,7 @@ export async function createItineraryInDb(itinerary: Omit<ItineraryDocument, "$i
       itinerary
     );
   } catch (err) {
-    console.warn("Could not save itinerary to Appwrite DB:", err);
+    logAppwriteNotice("Could not save itinerary to Appwrite DB", APPWRITE_ITINERARIES_COLLECTION_ID, err);
     return null;
   }
 }
@@ -156,9 +375,13 @@ export async function fetchUserTrips(userId: string): Promise<Trip[]> {
       APPWRITE_TRIPS_COLLECTION_ID,
       [Query.equal("userId", userId), Query.orderDesc("createdAt")]
     );
-    return res.documents as unknown as Trip[];
+    const trips = res.documents as unknown as Trip[];
+    if (typeof window !== "undefined" && trips.length > 0) {
+      localStorage.setItem(`lessgooo_trips_${userId}`, JSON.stringify(trips));
+    }
+    return trips;
   } catch (err) {
-    console.warn("Could not fetch trips from Appwrite DB:", err);
+    logAppwriteNotice("Could not fetch trips from Appwrite DB", APPWRITE_TRIPS_COLLECTION_ID, err);
     if (typeof window !== "undefined") {
       const cached = localStorage.getItem(`lessgooo_trips_${userId}`);
       if (cached) {
@@ -191,7 +414,7 @@ export async function createTripInDb(tripData: Omit<Trip, "$id">): Promise<Trip 
     syncTripToLocalStorage(saved);
     return saved;
   } catch (err) {
-    console.warn("Could not save trip to Appwrite DB (storing locally for resilience):", err);
+    logAppwriteNotice("Could not save trip to Appwrite DB (storing locally)", APPWRITE_TRIPS_COLLECTION_ID, err);
     const localTrip: Trip = {
       $id: "local_" + Date.now(),
       ...tripData,
@@ -214,7 +437,7 @@ export async function setTripActiveInDb(tripId: string, userId: string): Promise
       { status: "active", updatedAt: new Date().toISOString() }
     );
   } catch (err) {
-    console.warn("Could not update trip status in Appwrite:", err);
+    logAppwriteNotice("Could not update trip status in Appwrite", APPWRITE_TRIPS_COLLECTION_ID, err);
   }
 
   // Also update local cache
@@ -262,6 +485,60 @@ function syncTripToLocalStorage(trip: Trip) {
     const updated = [trip, ...existing.filter((t) => (t.$id || t.id) !== (trip.$id || trip.id))];
     localStorage.setItem(key, JSON.stringify(updated));
   } catch {}
+}
+
+/**
+ * Update trip details in DB and local cache
+ */
+export async function updateTripInDb(
+  tripId: string,
+  userId: string,
+  updates: Partial<Trip>
+): Promise<Trip | null> {
+  const safePayload: any = {
+    updatedAt: new Date().toISOString(),
+  };
+
+  if (updates.status !== undefined) safePayload.status = updates.status;
+  if (updates.title !== undefined) safePayload.title = updates.title;
+  if (updates.destination !== undefined) safePayload.destination = updates.destination;
+  if (updates.startDate !== undefined) safePayload.startDate = updates.startDate;
+  if (updates.endDate !== undefined) safePayload.endDate = updates.endDate;
+  if (updates.budget !== undefined) safePayload.budget = updates.budget;
+  if (updates.currency !== undefined) safePayload.currency = updates.currency;
+  if (updates.notes !== undefined) safePayload.notes = updates.notes;
+  if (updates.from !== undefined) safePayload.from = updates.from;
+
+  try {
+    const doc = await databases.updateDocument(
+      APPWRITE_DATABASE_ID,
+      APPWRITE_TRIPS_COLLECTION_ID,
+      tripId,
+      safePayload
+    );
+    const updated = { ...doc, ...updates } as unknown as Trip;
+    syncTripToLocalStorage(updated);
+    return updated;
+  } catch (err) {
+    logAppwriteNotice("Could not update trip in Appwrite DB (syncing local)", APPWRITE_TRIPS_COLLECTION_ID, err);
+    if (typeof window !== "undefined") {
+      const key = `lessgooo_trips_${userId}`;
+      try {
+        const existing: Trip[] = JSON.parse(localStorage.getItem(key) || "[]");
+        let updatedTrip: Trip | null = null;
+        const updated = existing.map((t) => {
+          if ((t.$id || t.id) === tripId) {
+            updatedTrip = { ...t, ...updates, updatedAt: new Date().toISOString() };
+            return updatedTrip;
+          }
+          return t;
+        });
+        localStorage.setItem(key, JSON.stringify(updated));
+        return updatedTrip;
+      } catch {}
+    }
+    return null;
+  }
 }
 
 export interface UserProfile {
@@ -357,7 +634,7 @@ export async function registerUser(payload: RegisterPayload) {
       profileData
     );
   } catch (dbError) {
-    console.warn("User registered in Auth, but could not write to database collection (ensure collection exists in console):", dbError);
+    logAppwriteNotice("Could not write user profile to database collection", APPWRITE_USERS_COLLECTION_ID, dbError);
   }
 
   setCachedUserProfile(profileData);
@@ -381,7 +658,7 @@ export async function loginUser(email: string, password: string) {
     );
     profile = doc as unknown as UserProfile;
   } catch (err) {
-    console.warn("Could not fetch user profile document:", err);
+    logAppwriteNotice("Could not fetch user profile document", APPWRITE_USERS_COLLECTION_ID, err);
     // Fallback profile if database document is not yet configured
     profile = {
       userId: currentAccount.$id,
@@ -474,7 +751,7 @@ export async function updateUserProfile(
     setCachedUserProfile(updated);
     return updated;
   } catch (err) {
-    console.warn("Could not update user in Appwrite DB:", err);
+    logAppwriteNotice("Could not update user in Appwrite DB", APPWRITE_USERS_COLLECTION_ID, err);
     try {
       const current = await getCurrentUserProfile();
       if (current?.profile) {
@@ -562,7 +839,7 @@ export async function fetchFeedPosts(): Promise<Post[]> {
       APPWRITE_POSTS_COLLECTION_ID,
       [Query.orderDesc("createdAt"), Query.limit(100)]
     );
-    return res.documents.map((doc: any) => ({
+    const posts = res.documents.map((doc: any) => ({
       $id: doc.$id,
       id: doc.$id || doc.id,
       userId: doc.userId || doc.user_id || "",
@@ -596,8 +873,12 @@ export async function fetchFeedPosts(): Promise<Post[]> {
         : [],
       createdAt: doc.createdAt || doc.created_at || doc.$createdAt || new Date().toISOString(),
     }));
+    if (typeof window !== "undefined" && posts.length > 0) {
+      localStorage.setItem("lessgooo_feed_posts", JSON.stringify(posts));
+    }
+    return posts;
   } catch (err) {
-    console.warn("Could not fetch posts from Appwrite (falling back to local cache):", err);
+    logAppwriteNotice("Could not fetch posts from Appwrite (falling back to local cache)", APPWRITE_POSTS_COLLECTION_ID, err);
     if (typeof window !== "undefined") {
       const cached = localStorage.getItem("lessgooo_feed_posts");
       if (cached) {
@@ -652,7 +933,7 @@ export async function createPostInDb(postData: Omit<Post, "$id">): Promise<Post 
     syncFeedPostToLocalStorage(created);
     return created;
   } catch (err) {
-    console.warn("Could not save post to Appwrite DB (persisting locally):", err);
+    logAppwriteNotice("Could not save post to Appwrite DB (persisting locally)", APPWRITE_POSTS_COLLECTION_ID, err);
     const localPost: Post = {
       $id: "post_" + Date.now(),
       id: "post_" + Date.now(),
@@ -693,7 +974,7 @@ export async function toggleLikePostInDb(
       }
     );
   } catch (err) {
-    console.warn("Could not sync like to Appwrite DB (updating locally):", err);
+    logAppwriteNotice("Could not sync like to Appwrite DB (updating locally)", APPWRITE_POSTS_COLLECTION_ID, err);
   }
 
   // Update local storage
@@ -721,7 +1002,7 @@ export async function deletePostFromDb(postId: string, userId: string): Promise<
       postId
     );
   } catch (err) {
-    console.warn("Could not delete post from Appwrite DB (cleaning local cache):", err);
+    logAppwriteNotice("Could not delete post from Appwrite DB (cleaning local cache)", APPWRITE_POSTS_COLLECTION_ID, err);
   }
 
   // Always sync local storage
