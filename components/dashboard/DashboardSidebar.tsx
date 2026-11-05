@@ -1,6 +1,7 @@
 "use client";
 
 import { Trip } from "@/lib/appwrite";
+import Logo from "@/components/Logo";
 
 export type SidebarView = "active-trip" | "upcoming-trips" | "completed-trips" | "new-trip" | "expenses" | "discover" | "feed" | "settings";
 
@@ -48,6 +49,20 @@ export default function DashboardSidebar({
       >
         {/* Top: + New Trip CTA & Main Menu Modules */}
         <div className="p-4 space-y-4 overflow-y-auto">
+          {/* Mobile brand badge & close */}
+          <div className="flex md:hidden items-center justify-between pb-2 border-b border-[#E7E3DC] dark:border-[#26272D]">
+            <Logo size="sm" variant="badge" showText={true} />
+            <button
+              onClick={onCloseMobile}
+              className="p-1 rounded-lg text-[#71717A] hover:text-[#18181B] dark:hover:text-[#F4F1EA]"
+              aria-label="Close sidebar"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
           {/* Prominent + New Trip CTA */}
           <button
             onClick={() => handleNavClick("new-trip")}

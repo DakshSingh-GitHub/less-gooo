@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -27,6 +28,7 @@ import CompletedTripsView from "@/components/dashboard/CompletedTripsView";
 import ExpenseManagerView from "@/components/dashboard/ExpenseManagerView";
 import DiscoverView from "@/components/dashboard/DiscoverView";
 import FeedView from "@/components/dashboard/FeedView";
+import Logo from "@/components/Logo";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -283,7 +285,7 @@ export default function DashboardPage() {
   if (authChecking) {
     return (
       <div className="min-h-screen bg-[#FAF8F5] dark:bg-[#121316] text-[#18181B] dark:text-[#F4F1EA] flex flex-col justify-center items-center font-mono text-xs space-y-4">
-        <div className="w-8 h-8 rounded-full border-2 border-[#C84B26] border-t-transparent animate-spin" />
+        <Logo size="lg" variant="badge" animated={true} className="animate-pulse" />
         <div className="text-center space-y-1">
           <span className="font-serif text-lg font-medium block">LessGooo</span>
           <span className="text-[#71717A] dark:text-[#A1A1AA]">Verifying traveller credentials...</span>

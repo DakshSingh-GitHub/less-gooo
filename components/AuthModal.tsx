@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { registerUser, loginUser, UserProfile } from "@/lib/appwrite";
+import Logo from "@/components/Logo";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -103,7 +104,8 @@ export default function AuthModal({
         </button>
 
         {/* Modal Header */}
-        <div className="text-center space-y-1 mb-6">
+        <div className="text-center space-y-2 mb-6 flex flex-col items-center">
+          <Logo size="lg" variant="badge" showText={false} className="mb-0.5" />
           <span className="font-serif text-2xl font-semibold tracking-tight">LessGooo</span>
           <h2 className="font-serif text-xl text-[#18181B] dark:text-[#F4F1EA]">
             {mode === "login" ? "Welcome back" : "Create your traveller account"}

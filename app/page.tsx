@@ -1,9 +1,11 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { client, getCurrentUserProfile, getCachedUserProfile, logoutUser, UserProfile } from "@/lib/appwrite";
 import AuthModal from "@/components/AuthModal";
+import Logo from "@/components/Logo";
 
 export default function Home() {
   const [activeDropdown, setActiveDropdown] = useState<"features" | "travelers" | "plans" | null>(null);
@@ -77,12 +79,10 @@ export default function Home() {
       {/* TOP NAVIGATION BAR */}
       <header className="sticky top-0 z-50 bg-[#FAF8F5]/90 dark:bg-[#121316]/90 backdrop-blur-md border-b border-[#E7E3DC] dark:border-[#26272D] transition-colors">
         <div ref={navRef} className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
-          {/* Brand Wordmark */}
-          <a href="#" className="flex items-center gap-2 group">
-            <span className="font-serif text-2xl font-semibold tracking-tight text-[#18181B] dark:text-[#F4F1EA] group-hover:text-[#C84B26] dark:group-hover:text-[#E05A32] transition-colors">
-              LessGooo
-            </span>
-          </a>
+          {/* Brand Wordmark & Sleek Logo */}
+          <Link href="/" className="flex items-center gap-2 group">
+            <Logo size="md" variant="badge" showText={true} animated={true} />
+          </Link>
 
           {/* Desktop Navigation — Exactly 3 Parent Dropdowns */}
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-[#52525B] dark:text-[#A1A1AA]">
@@ -724,7 +724,7 @@ export default function Home() {
       <footer className="border-t border-[#E7E3DC] dark:border-[#26272D] py-14 px-6 text-xs text-[#71717A] dark:text-[#A1A1AA]">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2">
-            <span className="font-serif font-semibold text-sm text-[#18181B] dark:text-[#F4F1EA]">LessGooo</span>
+            <Logo size="xs" variant="badge" showText={true} textClassName="text-sm font-semibold" />
             <span>•</span>
             <span>Adaptive Journey Companion</span>
           </div>

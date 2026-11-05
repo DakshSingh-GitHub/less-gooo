@@ -4,6 +4,13 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "LessGooo — Intelligent Adaptive Travel Companion",
   description: "Personalized itineraries, real-time traffic replanning, transport fare budgeting, expense tracking, and verified guide allotment.",
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/icon.svg",
+    shortcut: "/icon.svg",
+  },
 };
 
 export default function RootLayout({

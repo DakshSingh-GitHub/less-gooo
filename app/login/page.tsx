@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { registerUser, loginUser, getCurrentUserProfile } from "@/lib/appwrite";
+import Logo from "@/components/Logo";
 
 const INDIAN_STATES = [
   "Andhra Pradesh", "Assam", "Bihar", "Chhattisgarh", "Delhi", "Goa",
@@ -105,8 +106,8 @@ export default function LoginPage() {
     <div className="min-h-screen bg-[#FAF8F5] text-[#18181B] dark:bg-[#121316] dark:text-[#F4F1EA] selection:bg-[#C84B26] selection:text-white flex flex-col justify-between transition-colors duration-150">
       {/* Top Bar */}
       <header className="max-w-6xl w-full mx-auto px-6 h-20 flex items-center justify-between">
-        <Link href="/" className="font-serif text-2xl font-semibold tracking-tight hover:text-[#C84B26] transition-colors">
-          LessGooo
+        <Link href="/" className="flex items-center gap-2 group">
+          <Logo size="md" variant="badge" showText={true} />
         </Link>
 
         <div className="flex items-center gap-4">
@@ -138,7 +139,8 @@ export default function LoginPage() {
       {/* Main Form Centerpiece */}
       <main className="flex-1 flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-md bg-white dark:bg-[#1A1B20] border border-[#E7E3DC] dark:border-[#26272D] rounded-3xl shadow-xl p-8 sm:p-10 space-y-6">
-          <div className="text-center space-y-2">
+          <div className="text-center space-y-2 flex flex-col items-center">
+            <Logo size="lg" variant="badge" showText={false} className="mb-1" />
             <span className="text-xs uppercase tracking-widest font-mono text-[#C84B26] dark:text-[#E05A32]">
               Identity & Access
             </span>

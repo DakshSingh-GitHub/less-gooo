@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Logo from "@/components/Logo";
 import {
   getCurrentUserProfile,
   getCachedUserProfile,
@@ -127,7 +128,7 @@ export default function AccountInfoPage() {
   if (authChecking) {
     return (
       <div className="min-h-screen bg-[#FAF8F5] dark:bg-[#121316] text-[#18181B] dark:text-[#F4F1EA] flex flex-col justify-center items-center font-mono text-xs space-y-4">
-        <div className="w-8 h-8 rounded-full border-2 border-[#C84B26] border-t-transparent animate-spin" />
+        <Logo size="lg" variant="badge" animated={true} className="animate-pulse" />
         <div className="text-center space-y-1">
           <span className="font-serif text-lg font-medium block">LessGooo</span>
           <span className="text-[#71717A] dark:text-[#A1A1AA]">Loading account information...</span>
@@ -142,8 +143,8 @@ export default function AccountInfoPage() {
       <header className="sticky top-0 z-50 h-16 bg-[#FAF8F5]/90 dark:bg-[#121316]/90 backdrop-blur-md border-b border-[#E7E3DC] dark:border-[#26272D] transition-colors">
         <div className="max-w-6xl mx-auto px-6 h-full flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/" className="font-serif text-2xl font-semibold tracking-tight hover:text-[#C84B26] transition-colors">
-              LessGooo
+            <Link href="/" className="flex items-center gap-2 group">
+              <Logo size="sm" variant="badge" showText={true} />
             </Link>
             <span className="text-[#A1A1AA] text-sm">/</span>
             <span className="text-xs uppercase tracking-widest font-mono text-[#71717A] dark:text-[#A1A1AA]">

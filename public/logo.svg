@@ -1,0 +1,73 @@
+<svg viewBox="0 0 200 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Background Plate Gradient -->
+    <linearGradient id="full-bg" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1A1C23" />
+      <stop offset="100%" stop-color="#0E0F13" />
+    </linearGradient>
+
+    <!-- Saffron Ember Gradient -->
+    <linearGradient id="full-ember" x1="12" y1="10" x2="36" y2="38" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FF5A26" />
+      <stop offset="55%" stop-color="#E05A32" />
+      <stop offset="100%" stop-color="#C84B26" />
+    </linearGradient>
+
+    <!-- Kashi Ochre Gradient -->
+    <linearGradient id="full-ochre" x1="20" y1="8" x2="40" y2="28" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FCD34D" />
+      <stop offset="50%" stop-color="#E5A93C" />
+      <stop offset="100%" stop-color="#D97706" />
+    </linearGradient>
+  </defs>
+
+  <!-- Left: Tactile Emblem Plate -->
+  <g transform="translate(0, 0)">
+    <rect width="48" height="48" rx="12" fill="url(#full-bg)" />
+    <rect x="0.5" y="0.5" width="47" height="47" rx="11.5" stroke="rgba(255, 255, 255, 0.12)" stroke-width="1" />
+    
+    <!-- L Monogram -->
+    <path 
+      d="M 14.5 12 C 14.5 10.9 15.4 10 16.5 10 H 18 C 19.1 10 20 10.9 20 12 V 27.5 C 20 28.33 20.67 29 21.5 29 H 29 C 30.1 29 31 29.9 31 31 C 31 32.1 30.1 33 29 33 H 20.5 C 17.19 33 14.5 30.31 14.5 27 V 12 Z" 
+      fill="url(#full-ember)" 
+    />
+
+    <!-- G Route Arc -->
+    <path 
+      d="M 38 21.5 C 38 28.18 32.63 33.5 26 33.5 C 25.17 33.5 24.5 32.83 24.5 32 C 24.5 31.17 25.17 30.5 26 30.5 C 30.97 30.5 35 26.47 35 21.5 C 35 18.1 33.05 15.15 30.25 13.7 C 29.45 13.28 29.14 12.28 29.56 11.48 C 29.98 10.68 30.98 10.37 31.78 10.79 C 35.63 12.8 38 16.85 38 21.5 Z" 
+      fill="url(#full-ember)" 
+    />
+
+    <!-- Forward Compass Needle -->
+    <path 
+      d="M 27 10 C 27 9.45 27.45 9 28 9 H 37 C 37.55 9 38 9.45 38 10 V 19 C 38 19.55 37.55 20 37 20 C 36.45 20 36 19.55 36 19 V 12.41 L 26.71 21.71 C 26.32 22.1 25.68 22.1 25.29 21.71 C 24.9 21.32 24.9 20.68 25.29 20.29 L 34.59 11 H 28 C 27.45 11 27 10.55 27 10 Z" 
+      fill="url(#full-ochre)" 
+    />
+
+    <!-- Waypoint Beacon Dot -->
+    <circle cx="25" cy="25" r="2.4" fill="url(#full-ember)" />
+    <circle cx="25" cy="25" r="1.2" fill="#FAF8F5" />
+  </g>
+
+  <!-- Right: Editorial Wordmark -->
+  <text 
+    x="62" 
+    y="29" 
+    fill="#F4F1EA" 
+    font-family="Georgia, Cambria, 'Times New Roman', serif" 
+    font-size="22" 
+    font-weight="600" 
+    letter-spacing="-0.5"
+  >LessGooo</text>
+
+  <!-- Subtitle Tagline -->
+  <text 
+    x="63" 
+    y="40" 
+    fill="#A1A1AA" 
+    font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" 
+    font-size="8.5" 
+    letter-spacing="1.5"
+  >SPATIAL WAYFINDER</text>
+</svg>
+

@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { UserProfile } from "@/lib/appwrite";
+import Logo from "@/components/Logo";
 
 interface DashboardNavbarProps {
   user: UserProfile | null;
@@ -51,8 +52,8 @@ export default function DashboardNavbar({
             </svg>
           </button>
 
-          <Link href="/" className="font-serif text-xl sm:text-2xl font-semibold tracking-tight text-[#18181B] dark:text-[#F4F1EA] hover:text-[#C84B26] dark:hover:text-[#E05A32] transition-colors">
-            LessGooo
+          <Link href="/" className="flex items-center gap-2 group">
+            <Logo size="sm" variant="badge" showText={true} />
           </Link>
 
           <div className="hidden sm:flex items-center gap-2 text-xs font-mono text-[#71717A] dark:text-[#A1A1AA] pl-3 border-l border-[#E7E3DC] dark:border-[#26272D]">
