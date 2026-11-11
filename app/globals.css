@@ -13,33 +13,255 @@
 }
 
 .dark {
-  --background: #121316;
-  --foreground: #f4f1ea;
-  --surface: #1a1b20;
-  --surface-border: #26272d;
-  --accent: #e05a32;
+  --background: #0a0d14;
+  --foreground: #f3eee5;
+  --surface: #171b24;
+  --surface-border: #262b38;
+  --accent: #ff5a26;
   --accent-soft: #2a1b16;
-  --muted: #a1a1aa;
+  --muted: #a39d92;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-surface: var(--surface);
-  --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: var(--font-bodoni), "Bodoni MT", Didot, "Playfair Display", Georgia, serif;
+  --font-editorial: var(--font-cormorant), Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-serif: var(--font-cormorant), ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  --font-sans: var(--font-dm-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--font-dm-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 ::selection {
-  background-color: #c84b26;
-  color: #ffffff;
+  background-color: #ff5a26;
+  color: #f3eee5;
+}
+
+/* ==========================================================================
+   CINEMATIC TRAVEL EDITORIAL × INTERACTIVE CARTOGRAPHY TOKENS
+   ========================================================================== */
+
+.atlas-editorial-root {
+  /* Daylight Archival Vellum (when user explicitly selects Light theme) */
+  --atlas-bg: #f4efe6;
+  --atlas-bg-deep: #ebe3d5;
+  --atlas-surface: #fdfaf4;
+  --atlas-surface-elevated: #f2ebde;
+  --atlas-ticket: #f9f4ea;
+  --atlas-text: #141720;
+  --atlas-text-secondary: #434652;
+  --atlas-text-muted: #6e6a61;
+  --atlas-border: rgba(20, 23, 32, 0.12);
+  --atlas-border-brass: rgba(180, 123, 24, 0.28);
+  --atlas-grid-line: rgba(20, 23, 32, 0.045);
+  --atlas-ember: #e04819;
+  --atlas-brass: #b87e14;
+  --atlas-indigo: #3360e0;
+  --atlas-jade: #0d9488;
+  --atlas-shadow: 0 24px 60px -18px rgba(20, 23, 32, 0.12);
+  --atlas-radius-sm: 14px;
+  --atlas-radius-md: 22px;
+  --atlas-radius-lg: 34px;
+}
+
+.dark .atlas-editorial-root {
+  /* Nocturnal Obsidian Signature Palette */
+  --atlas-bg: #0a0d14;
+  --atlas-bg-deep: #07090e;
+  --atlas-surface: #171b24;
+  --atlas-surface-elevated: #1e2330;
+  --atlas-ticket: #141821;
+  --atlas-text: #f3eee5;
+  --atlas-text-secondary: #c5beb1;
+  --atlas-text-muted: #8c867a;
+  --atlas-border: rgba(243, 238, 229, 0.09);
+  --atlas-border-brass: rgba(229, 169, 60, 0.24);
+  --atlas-grid-line: rgba(243, 238, 229, 0.035);
+  --atlas-ember: #ff5a26;
+  --atlas-brass: #e5a93c;
+  --atlas-indigo: #4e7bff;
+  --atlas-jade: #2dd4bf;
+  --atlas-shadow: 0 28px 72px -20px rgba(0, 0, 0, 0.65);
+}
+
+/* A soft, tactile baseline shared by the complete travel journal. Individual
+   compositions still control their own silhouettes; this only removes the
+   rigid component-library edge language. */
+.atlas-editorial-root button,
+.atlas-editorial-root input,
+.atlas-editorial-root select {
+  border-radius: var(--atlas-radius-sm);
+}
+
+.atlas-editorial-root a:focus-visible,
+.atlas-editorial-root button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--atlas-ember) 75%, white);
+  outline-offset: 3px;
+}
+
+.atlas-paper {
+  background:
+    radial-gradient(circle at 5% 0%, rgba(229, 169, 60, 0.14), transparent 30rem),
+    radial-gradient(circle at 95% 30%, rgba(78, 123, 255, 0.08), transparent 32rem),
+    var(--atlas-bg);
+}
+
+.atlas-soft-panel {
+  border-radius: var(--atlas-radius-lg);
+  box-shadow: var(--atlas-shadow);
+}
+
+.atlas-section-kicker {
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--atlas-brass);
+}
+
+.organic-clip-left {
+  border-radius: 48% 52% 38% 62% / 46% 38% 62% 54%;
+}
+
+.organic-clip-right {
+  border-radius: 62% 38% 54% 46% / 45% 58% 42% 55%;
+}
+
+/* Subtle archival grain texture */
+.atlas-grain {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+}
+
+/* Cartographic graticule lines */
+.atlas-graticule {
+  background-size: 64px 64px;
+  background-image:
+    linear-gradient(to right, var(--atlas-grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--atlas-grid-line) 1px, transparent 1px);
+}
+
+/* Tactile perforated travel document divider */
+.ticket-perforation {
+  background-image: repeating-linear-gradient(
+    to right,
+    var(--atlas-border-brass) 0px,
+    var(--atlas-border-brass) 6px,
+    transparent 6px,
+    transparent 12px
+  );
+  height: 1px;
+}
+
+.ticket-perforation-vertical {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    var(--atlas-border-brass) 0px,
+    var(--atlas-border-brass) 6px,
+    transparent 6px,
+    transparent 12px
+  );
+  width: 1px;
+}
+
+/* Keyframe animations for cartography & editorial reveals */
+@keyframes routeDashFlow {
+  0% {
+    stroke-dashoffset: 48;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes softBeaconPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scale(1.65);
+    opacity: 0;
+  }
+}
+
+@keyframes gentleDrift {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.animate-route-flow {
+  stroke-dasharray: 6 6;
+  animation: routeDashFlow 3.2s linear infinite;
+}
+
+.animate-beacon-ring {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: softBeaconPulse 3s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+.animate-gentle-drift {
+  animation: gentleDrift 6s ease-in-out infinite;
+}
+
+/* Editorial scroll reveal utility */
+.editorial-reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.editorial-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@keyframes editorialBreathe {
+  0%, 100% { transform: scale(1.01) translate3d(0, 0, 0); }
+  50% { transform: scale(1.05) translate3d(0, -0.5%, 0); }
+}
+
+.editorial-breathe {
+  animation: editorialBreathe 18s ease-in-out infinite;
+}
+
+/* Strictly honor reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto !important;
+  }
+
+  .animate-route-flow,
+  .animate-beacon-ring,
+  .animate-gentle-drift {
+    animation: none !important;
+  }
+
+  .editorial-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
+  .editorial-breathe {
+    animation: none !important;
+  }
 }
