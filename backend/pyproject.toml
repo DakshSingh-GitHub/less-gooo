@@ -1,17 +1,13 @@
 [project]
 name = "lessgooo-backend"
 version = "0.1.0"
-description = "FastAPI backend for LessGooo travel companion"
+description = "FastAPI backend for LessGooo travel companion (Appwrite Cloud + Vercel)"
 requires-python = ">=3.9"
 dependencies = [
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.30.0",
-    "sqlalchemy[asyncio]>=2.0.35",
-    "aiosqlite>=0.20.0",
     "pydantic-settings>=2.5.0",
     "email-validator>=2.2.0",
-    "passlib[argon2]>=1.7.4",
-    "argon2-cffi>=23.1.0",
     "pyjwt>=2.9.0",
     "google-genai>=1.0.0",
     "httpx>=0.27.0",
@@ -21,9 +17,6 @@ dependencies = [
 dev = [
     "pytest>=8.3.0",
     "pytest-asyncio>=0.24.0",
-]
-postgres = [
-    "asyncpg>=0.30.0",
 ]
 
 [tool.pytest.ini_options]

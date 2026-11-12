@@ -9,7 +9,20 @@ class Settings(BaseSettings):
 
     APP_NAME: str = "LessGooo API"
     API_V1_PREFIX: str = "/api/v1"
-    DATABASE_URL: str = "sqlite+aiosqlite:///./lessgooo.db"
+
+    # Appwrite Cloud configuration
+    APPWRITE_ENDPOINT: str = "https://nyc.cloud.appwrite.io/v1"
+    APPWRITE_PROJECT_ID: str = "6addf37400385e615d7d"
+    APPWRITE_DATABASE_ID: str = "6addf6920037cf1f242e"
+    APPWRITE_API_KEY: str = ""
+    APPWRITE_USERS_COLLECTION_ID: str = "6addf762000aef39ee91"
+    APPWRITE_TRIPS_COLLECTION_ID: str = "trips"
+    APPWRITE_ITINERARIES_COLLECTION_ID: str = "itineraries"
+    APPWRITE_EXPENSES_COLLECTION_ID: str = "expenses"
+    APPWRITE_GUIDES_COLLECTION_ID: str = "guides"
+    APPWRITE_POSTS_COLLECTION_ID: str = "posts"
+
+    # Auth & AI
     JWT_SECRET_KEY: str = "lessgooo-dev-secret-key-change-in-production-2026"
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 10080  # 7 days

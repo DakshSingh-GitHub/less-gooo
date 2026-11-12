@@ -1,16 +1,14 @@
 from __future__ import annotations
 
+import json
 from datetime import datetime, timezone
 from typing import Any, Dict
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.deps import get_current_user
-from app.db.session import get_db
-from app.models.trip import Trip
-from app.models.user import User
+from app.db.appwrite_client import appwrite_client
 from app.schemas.trip import GeneratePlanRequest, ReplanRequest
 from app.services.plan_generator import (
     generate_fallback_plan,
@@ -125,17 +123,18 @@ async def generate_plan(payload: GeneratePlanRequest) -> Dict[str, Any]:
 async def replan_trip_for_dwell(
     trip_id: str,
     payload: ReplanRequest,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ) -> Dict[str, Any]:
-    result = await db.execute(select(Trip).where(Trip.id == trip_id, Trip.user_id == current_user.id))
-    trip = result.scalar_one_or_none()
-    if not trip:
+    user_id = current_user.get("userId") or current_user.get("$id", "")
+    trip = await appwrite_client.get_document(settings.APPWRITE_TRIPS_COLLECTION_ID, trip_id)
+    if not trip or trip.get("userId") != user_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Trip not found.")
-    if not trip.proposed_plan:
+
+    raw_plan = trip.get("proposedPlan")
+    previous_plan = json.loads(raw_plan) if isinstance(raw_plan, str) else raw_plan
+    if not previous_plan:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Trip has no proposed plan yet.")
 
-    previous_plan = trip.proposed_plan
     updated_plan = replan_day_for_delay(
         proposed_plan=previous_plan,
         day_number=payload.dayNumber,
@@ -143,15 +142,21 @@ async def replan_trip_for_dwell(
         delay_minutes=payload.delayMinutes,
     )
 
-    auto_applied = current_user.tier == "pro"
+    tier = current_user.get("tier", "free")
+    auto_applied = tier == "pro"
     if auto_applied:
-        trip.proposed_plan = updated_plan
-        trip.updated_at = datetime.now(timezone.utc)
-        await db.commit()
+        await appwrite_client.update_document(
+            settings.APPWRITE_TRIPS_COLLECTION_ID,
+            trip_id,
+            {
+                "proposedPlan": json.dumps(updated_plan),
+                "updatedAt": datetime.now(timezone.utc).isoformat(),
+            },
+        )
 
     return {
         "autoApplied": auto_applied,
-        "tier": current_user.tier,
+        "tier": tier,
         "proposedPlan": updated_plan,
         "undoPlan": previous_plan if auto_applied else None,
     }
