@@ -69,7 +69,15 @@ async def register(payload: RegisterRequest) -> AuthResponse:
         document_id=user_id,
     )
 
-    token = create_access_token(user_id, {"tier": "free"})
+    token = create_access_token(
+        user_id,
+        {
+            "tier": "free",
+            "name": payload.fullName.strip(),
+            "email": clean_email,
+            "username": clean_username,
+        },
+    )
     return AuthResponse(accessToken=token, profile=_to_profile(created_doc))
 
 
@@ -92,7 +100,15 @@ async def login(payload: LoginRequest) -> AuthResponse:
             "createdAt": datetime.now(timezone.utc).isoformat(),
         }
 
-    token = create_access_token(user_id, {"tier": profile.get("tier", "free")})
+    token = create_access_token(
+        user_id,
+        {
+            "tier": profile.get("tier", "free"),
+            "name": profile.get("fullName", ""),
+            "email": clean_email,
+            "username": profile.get("username", clean_email.split("@")[0]),
+        },
+    )
     return AuthResponse(accessToken=token, profile=_to_profile(profile))
 
 

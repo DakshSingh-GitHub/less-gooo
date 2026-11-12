@@ -314,9 +314,18 @@ export async function getCurrentUserProfile(): Promise<{ account: { $id: string 
     const profile = await apiRequest<UserProfile>("/auth/me");
     setCachedUserProfile(profile);
     return { account: { $id: profile.userId }, profile };
-  } catch {
-    setAccessToken(null);
-    setCachedUserProfile(null);
+  } catch (err: any) {
+    const msg = String(err?.message || "").toLowerCase();
+    if (msg.includes("401") || msg.includes("unauthorized")) {
+      setAccessToken(null);
+      setCachedUserProfile(null);
+      return null;
+    }
+    // On temporary backend glitches, retain cached user profile so the user is not bounced out
+    const cached = getCachedUserProfile();
+    if (cached) {
+      return { account: { $id: cached.userId }, profile: cached };
+    }
     return null;
   }
 }
