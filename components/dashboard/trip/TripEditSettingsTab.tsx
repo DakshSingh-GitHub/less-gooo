@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Trip, updateTripInDb } from "@/lib/appwrite";
+import { getAutomatedTripStatus } from "@/lib/tripDateUtils";
 
 interface TripEditSettingsTabProps {
   trip: Trip;
@@ -53,6 +54,7 @@ export default function TripEditSettingsTab({
       const tripId = trip.$id || trip.id;
       if (!tripId) throw new Error("Trip identifier missing");
 
+      const datesChanged = startDate !== trip.startDate || endDate !== trip.endDate;
       const updates: Partial<Trip> = {
         title: title.trim(),
         from: from.trim(),
@@ -62,6 +64,7 @@ export default function TripEditSettingsTab({
         budget: parseFloat(budget) || 0,
         currency,
         notes: notes.trim(),
+        ...(datesChanged ? { status: getAutomatedTripStatus(startDate, endDate) } : {}),
       };
 
       const updated = await updateTripInDb(tripId, trip.userId, updates);

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Trip } from "@/lib/appwrite";
+import { getAutomatedTripStatus } from "@/lib/tripDateUtils";
 
 interface TripCreateFormProps {
   userId: string;
@@ -32,10 +33,12 @@ export default function TripCreateForm({
   const [category, setCategory] = useState("Vacation");
   const [budget, setBudget] = useState("");
   const [currency, setCurrency] = useState("INR");
-  const [status, setStatus] = useState<"upcoming" | "active">("upcoming");
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const automatedStatus =
+    startDate && endDate ? getAutomatedTripStatus(startDate, endDate) : null;
 
   // Auto-detect current location
   const detectLocation = () => {
@@ -111,6 +114,7 @@ export default function TripCreateForm({
     setIsSubmitting(true);
     try {
       const now = new Date().toISOString();
+      const computedStatus = getAutomatedTripStatus(startDate, endDate);
       const payload: Omit<Trip, "$id"> = {
         userId,
         title: title.trim(),
@@ -121,7 +125,7 @@ export default function TripCreateForm({
         category,
         budget: parseFloat(budget) || 0,
         currency,
-        status,
+        status: computedStatus,
         notes: notes.trim(),
         createdAt: now,
         updatedAt: now,
@@ -331,40 +335,40 @@ export default function TripCreateForm({
           </div>
         </div>
 
-        {/* Row 4: Status Setting with Single Active Rule Notice */}
+        {/* Row 4: Automated Status Preview */}
         <div className="p-4 rounded-2xl bg-[#FAF8F5] dark:bg-[#121316] border border-[#E7E3DC] dark:border-[#26272D] space-y-2">
-          <label className="block text-xs font-mono uppercase text-[#71717A] dark:text-[#A1A1AA] tracking-wider">
-            Initial Status
-          </label>
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={() => setStatus("upcoming")}
-              className={`flex-1 py-2 px-3 rounded-xl text-xs font-mono border transition-all cursor-pointer ${
-                status === "upcoming"
-                  ? "bg-[#18181B] text-white dark:bg-[#F4F1EA] dark:text-[#121316] font-semibold"
-                  : "border-[#E7E3DC] dark:border-[#26272D] text-[#71717A]"
-              }`}
-            >
-              Upcoming Trip
-            </button>
-            <button
-              type="button"
-              onClick={() => setStatus("active")}
-              className={`flex-1 py-2 px-3 rounded-xl text-xs font-mono border transition-all cursor-pointer ${
-                status === "active"
-                  ? "bg-[#C84B26] text-white font-semibold shadow-sm"
-                  : "border-[#E7E3DC] dark:border-[#26272D] text-[#71717A]"
-              }`}
-            >
-              Active Trip (Ongoing)
-            </button>
+          <div className="flex items-center justify-between gap-2">
+            <label className="block text-xs font-mono uppercase text-[#71717A] dark:text-[#A1A1AA] tracking-wider">
+              Automated Trip Status
+            </label>
+            {automatedStatus && (
+              <span
+                className={`px-2.5 py-1 rounded-full text-[11px] font-mono uppercase font-semibold ${
+                  automatedStatus === "active"
+                    ? "bg-[#C84B26] text-white"
+                    : automatedStatus === "completed"
+                    ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30"
+                    : "bg-[#18181B] text-white dark:bg-[#F4F1EA] dark:text-[#121316]"
+                }`}
+              >
+                {automatedStatus === "active"
+                  ? "Active Trip (Ongoing)"
+                  : automatedStatus === "completed"
+                  ? "Completed Trip"
+                  : "Upcoming Trip"}
+              </span>
+            )}
           </div>
-          {status === "active" && (
-            <p className="text-[11px] text-[#C84B26] dark:text-[#E05A32] font-mono leading-normal">
-              Notice: Setting this trip as Active will automatically transition any other ongoing trip to upcoming.
-            </p>
-          )}
+          <p className="text-[11px] text-[#71717A] dark:text-[#A1A1AA] font-mono leading-normal">
+            {!automatedStatus &&
+              "Select start and end dates — your trip will automatically activate when the start date arrives and deactivate after the end date."}
+            {automatedStatus === "active" &&
+              "Today falls within your selected dates. This trip will automatically be set as Active (and any previous active trip will transition to upcoming)."}
+            {automatedStatus === "upcoming" &&
+              "Your start date is in the future. This trip will be saved as Upcoming and will automatically activate on its start date."}
+            {automatedStatus === "completed" &&
+              "The selected end date has already passed, so this trip will be archived as Completed."}
+          </p>
         </div>
 
         {/* Row 5: Notes & Checklist */}

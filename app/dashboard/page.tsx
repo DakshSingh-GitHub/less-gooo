@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   getCurrentUserProfile,
@@ -14,10 +14,15 @@ import {
   Post,
   fetchUserTrips,
   setTripActiveInDb,
+  updateTripInDb,
   fetchUserExpenses,
   addExpenseToDb,
   fetchFeedPosts
 } from "@/lib/appwrite";
+import {
+  getLocalTodayDateString,
+  reconcileTripsWithCurrentDate,
+} from "@/lib/tripDateUtils";
 
 import DashboardNavbar from "@/components/dashboard/DashboardNavbar";
 import DashboardSidebar, { SidebarView } from "@/components/dashboard/DashboardSidebar";
@@ -45,6 +50,33 @@ export default function DashboardPage() {
   const [postsLoading, setPostsLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // Persist automated date-based status transitions to local cache and Appwrite DB
+  const syncTripsWithDate = useCallback(async (rawTrips: Trip[], userId?: string): Promise<Trip[]> => {
+    const { trips: reconciled, changedTrips } = reconcileTripsWithCurrentDate(rawTrips);
+
+    if (changedTrips.length > 0 && userId) {
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem(`lessgooo_trips_${userId}`, JSON.stringify(reconciled));
+        } catch {}
+      }
+
+      await Promise.all(
+        changedTrips.map(async ({ trip, nextStatus }) => {
+          const tripId = trip.$id || trip.id;
+          if (!tripId) return;
+          if (nextStatus === "active") {
+            await setTripActiveInDb(tripId, userId);
+          } else {
+            await updateTripInDb(tripId, userId, { status: nextStatus });
+          }
+        })
+      );
+    }
+
+    return reconciled;
+  }, []);
+
   // Authentication & Initial Data Fetch
   useEffect(() => {
     // Theme setup
@@ -67,7 +99,9 @@ export default function DashboardPage() {
       try {
         const cachedTripsRaw = localStorage.getItem(`lessgooo_trips_${cachedUser.userId}`);
         if (cachedTripsRaw) {
-          setTrips(JSON.parse(cachedTripsRaw));
+          const parsedTrips: Trip[] = JSON.parse(cachedTripsRaw);
+          const { trips: reconciledCached } = reconcileTripsWithCurrentDate(parsedTrips);
+          setTrips(reconciledCached);
         }
         const cachedExpensesRaw = localStorage.getItem(`lessgooo_expenses_${cachedUser.userId}`);
         if (cachedExpensesRaw) {
@@ -95,7 +129,8 @@ export default function DashboardPage() {
 
         // Background sync real trips, expenses, and posts from Appwrite
         const userTrips = await fetchUserTrips(res.profile.userId);
-        setTrips(userTrips);
+        const reconciledTrips = await syncTripsWithDate(userTrips, res.profile.userId);
+        setTrips(reconciledTrips);
 
         const userExpenses = await fetchUserExpenses(res.profile.userId);
         setExpenses(userExpenses);
@@ -111,7 +146,36 @@ export default function DashboardPage() {
         router.replace("/login");
       }
     });
-  }, [router]);
+  }, [router, syncTripsWithDate]);
+
+  // Automatically re-evaluate trip dates on window focus / midnight rollover
+  useEffect(() => {
+    if (!user?.userId || trips.length === 0) return;
+
+    const runDateCheck = () => {
+      const { trips: reconciled, changedTrips } = reconcileTripsWithCurrentDate(trips);
+      if (changedTrips.length > 0) {
+        setTrips(reconciled);
+        void syncTripsWithDate(trips, user.userId);
+      }
+    };
+
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        runDateCheck();
+      }
+    };
+
+    window.addEventListener("focus", runDateCheck);
+    document.addEventListener("visibilitychange", handleVisibility);
+    const intervalId = window.setInterval(runDateCheck, 60_000);
+
+    return () => {
+      window.removeEventListener("focus", runDateCheck);
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.clearInterval(intervalId);
+    };
+  }, [trips, user?.userId, syncTripsWithDate]);
 
   const toggleTheme = () => {
     if (isDarkMode) {
@@ -145,6 +209,9 @@ export default function DashboardPage() {
       );
       setTrips([createdTrip, ...updatedTrips]);
       setCurrentView("active-trip");
+    } else if (createdTrip.status === "completed") {
+      setTrips([createdTrip, ...trips]);
+      setCurrentView("completed-trips");
     } else {
       setTrips([createdTrip, ...trips]);
       setCurrentView("upcoming-trips");
@@ -173,11 +240,10 @@ export default function DashboardPage() {
 
   // Handle Complete Trip with Date Override
   const handleCompleteTrip = async (tripId: string, overrideEndDate?: string) => {
-    const today = new Date().toISOString().split("T")[0];
+    const today = getLocalTodayDateString();
     const finalEndDate = overrideEndDate || today;
 
     if (user?.userId) {
-      const { updateTripInDb } = await import("@/lib/appwrite");
       await updateTripInDb(tripId, user.userId, {
         status: "completed",
         endDate: finalEndDate,
@@ -201,9 +267,16 @@ export default function DashboardPage() {
 
   // Handle Update Trip (Settings, Plan Specifications, Proposed Plan)
   const handleUpdateTrip = (updatedTrip: Trip) => {
-    setTrips((prev) =>
-      prev.map((t) => ((t.$id || t.id) === (updatedTrip.$id || updatedTrip.id) ? updatedTrip : t))
-    );
+    setTrips((prev) => {
+      const next = prev.map((t) =>
+        (t.$id || t.id) === (updatedTrip.$id || updatedTrip.id) ? updatedTrip : t
+      );
+      const { trips: reconciled, changedTrips } = reconcileTripsWithCurrentDate(next);
+      if (changedTrips.length > 0 && user?.userId) {
+        void syncTripsWithDate(next, user.userId);
+      }
+      return reconciled;
+    });
   };
 
   // Handle Add Expense
