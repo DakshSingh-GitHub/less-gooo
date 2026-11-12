@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Trip, ProposedPlanDay, updateTripInDb } from "@/lib/appwrite";
+import { API_BASE_URL } from "@/lib/api";
 
 interface TripProposedPlanTabProps {
   trip: Trip;
@@ -38,7 +39,7 @@ export default function TripProposedPlanTab({
     setAutoLoggedNotice(null);
 
     try {
-      const res = await fetch("/api/trips/generate-plan", {
+      const res = await fetch(`${API_BASE_URL}/trips/generate-plan`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

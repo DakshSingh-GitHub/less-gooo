@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { API_BASE_URL } from "@/lib/api";
 import { Trip } from "@/lib/appwrite";
 import { getAutomatedTripStatus } from "@/lib/tripDateUtils";
 
@@ -55,8 +56,7 @@ export default function TripCreateForm({
         const { latitude, longitude } = pos.coords;
         try {
           const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
-            { headers: { "Accept-Language": "en" } }
+            `${API_BASE_URL}/maps/reverse?lat=${latitude}&lon=${longitude}`
           );
           if (res.ok) {
             const data = await res.json();

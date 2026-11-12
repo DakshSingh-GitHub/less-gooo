@@ -42,12 +42,14 @@ function parseLatLngString(value: string): LatLng | null {
   return { lat, lng };
 }
 
+import { API_BASE_URL } from "@/lib/api";
+
 async function geocodePlace(query: string): Promise<LatLng | null> {
   const parsed = parseLatLngString(query);
   if (parsed) return parsed;
 
-  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
-  const res = await fetch(url, { headers: { "Accept-Language": "en" } });
+  const url = `${API_BASE_URL}/maps/geocode?q=${encodeURIComponent(query)}`;
+  const res = await fetch(url);
   if (!res.ok) return null;
   const data = await res.json();
   if (!Array.isArray(data) || data.length === 0) return null;
@@ -230,7 +232,7 @@ export default function LiveNavigationMap({
           return;
         }
 
-        const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${orig.lng},${orig.lat};${dest.lng},${dest.lat}?overview=full&geometries=geojson&steps=true`;
+        const osrmUrl = `${API_BASE_URL}/maps/route?orig_lat=${orig.lat}&orig_lng=${orig.lng}&dest_lat=${dest.lat}&dest_lng=${dest.lng}`;
         const res = await fetch(osrmUrl);
         if (!res.ok) throw new Error("Routing service unavailable");
         const json = await res.json();
