@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { API_BASE_URL } from "@/lib/api";
-import { Trip } from "@/lib/appwrite";
+import { Trip, PlanSpecifications } from "@/lib/appwrite";
 import { getAutomatedTripStatus } from "@/lib/tripDateUtils";
 import { reverseGeocodeToCity } from "@/lib/cityService";
+import { calculateSingleLegTransitCost } from "@/lib/transitEngine";
 import CityAutocompleteInput from "@/components/ui/CityAutocompleteInput";
+import PlanSpecificationsEditor, { DEFAULT_SPECS } from "@/components/dashboard/trip/PlanSpecificationsEditor";
 
 interface TripCreateFormProps {
   userId: string;
@@ -37,6 +39,8 @@ export default function TripCreateForm({
   const [budget, setBudget] = useState("");
   const [currency, setCurrency] = useState("INR");
   const [notes, setNotes] = useState("");
+  const [specs, setSpecs] = useState<PlanSpecifications>(DEFAULT_SPECS);
+  const [isSpecsExpanded, setIsSpecsExpanded] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -102,11 +106,33 @@ export default function TripCreateForm({
     try {
       const now = new Date().toISOString();
       const computedStatus = getAutomatedTripStatus(startDate, endDate);
+
+      const fromPlace = fromLocation.trim() || "Current Location";
+      const destPlace = destination.trim();
+
+      const approachingCalc = calculateSingleLegTransitCost(
+        specs.approachingTransitMode || "self_car",
+        fromPlace,
+        destPlace,
+        "approaching",
+        specs.passengersCount,
+        specs.approachingCarFuelType || "petrol"
+      );
+
+      const departureCalc = calculateSingleLegTransitCost(
+        specs.departureTransitMode || "self_car",
+        fromPlace,
+        destPlace,
+        "departure",
+        specs.passengersCount,
+        specs.departureCarFuelType || "petrol"
+      );
+
       const payload: Omit<Trip, "$id"> = {
         userId,
         title: title.trim(),
-        from: fromLocation.trim() || "Current Location",
-        destination: destination.trim(),
+        from: fromPlace,
+        destination: destPlace,
         startDate,
         endDate,
         category,
@@ -114,6 +140,9 @@ export default function TripCreateForm({
         currency,
         status: computedStatus,
         notes: notes.trim(),
+        specifications: specs,
+        approachingTransitCost: approachingCalc,
+        departureTransitCost: departureCalc,
         createdAt: now,
         updatedAt: now,
       };
@@ -352,7 +381,62 @@ export default function TripCreateForm({
           </p>
         </div>
 
-        {/* Row 5: Notes & Checklist */}
+        {/* Row 5: Plan Specifications & Dual-Leg Transit */}
+        <div className="pt-4 border-t border-[#E7E3DC] dark:border-[#26272D] space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-[#E7E3DC]/60 dark:border-[#26272D]">
+            <div>
+              <span className="text-[10px] font-mono uppercase tracking-widest text-[#C84B26] dark:text-[#E05A32] block">
+                Required Specifications
+              </span>
+              <h3 className="font-serif text-xl sm:text-2xl text-[#18181B] dark:text-[#F4F1EA]">
+                Plan Specifications & Transit Preferences
+              </h3>
+              <p className="text-xs text-[#71717A] dark:text-[#A1A1AA] font-light mt-0.5">
+                Define your transportation modes, daily pace, dining preferences, and safety waypoints right with trip creation.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsSpecsExpanded((prev) => !prev)}
+              className="self-start sm:self-auto px-3.5 py-1.5 rounded-xl border border-[#E7E3DC] dark:border-[#26272D] text-xs font-mono uppercase text-[#71717A] hover:text-[#18181B] dark:hover:text-[#F4F1EA] transition-colors flex items-center gap-1.5 cursor-pointer"
+            >
+              <span>{isSpecsExpanded ? "Hide Details" : "Customize Specs"}</span>
+              <span className="text-[10px]">{isSpecsExpanded ? "▲" : "▼"}</span>
+            </button>
+          </div>
+
+          {/* Quick specs summary badge pills */}
+          <div className="flex flex-wrap items-center gap-2 p-3 rounded-xl bg-[#FAF8F5] dark:bg-[#121316] border border-[#E7E3DC] dark:border-[#26272D] font-mono text-[11px]">
+            <span className="px-2.5 py-1 rounded-lg bg-white dark:bg-[#1A1B20] border border-[#E7E3DC] dark:border-[#26272D] text-[#71717A] dark:text-[#A1A1AA]">
+              Inbound: <strong className="text-[#C84B26] dark:text-[#E05A32] uppercase">{specs.approachingTransitMode.replace("_", " ")}</strong>
+            </span>
+            <span className="px-2.5 py-1 rounded-lg bg-white dark:bg-[#1A1B20] border border-[#E7E3DC] dark:border-[#26272D] text-[#71717A] dark:text-[#A1A1AA]">
+              Return: <strong className="text-emerald-600 dark:text-emerald-400 uppercase">{specs.departureTransitMode.replace("_", " ")}</strong>
+            </span>
+            <span className="px-2.5 py-1 rounded-lg bg-white dark:bg-[#1A1B20] border border-[#E7E3DC] dark:border-[#26272D] text-[#71717A] dark:text-[#A1A1AA]">
+              Travelers: <strong className="text-[#18181B] dark:text-[#F4F1EA]">{specs.passengersCount} Pax</strong>
+            </span>
+            <span className="px-2.5 py-1 rounded-lg bg-white dark:bg-[#1A1B20] border border-[#E7E3DC] dark:border-[#26272D] text-[#71717A] dark:text-[#A1A1AA]">
+              Pace: <strong className="text-[#18181B] dark:text-[#F4F1EA] capitalize">{specs.pace}</strong>
+            </span>
+            <span className="px-2.5 py-1 rounded-lg bg-white dark:bg-[#1A1B20] border border-[#E7E3DC] dark:border-[#26272D] text-[#71717A] dark:text-[#A1A1AA]">
+              Diet: <strong className="text-[#18181B] dark:text-[#F4F1EA]">{specs.dietaryPreference === "pure_veg" ? "Pure Veg 🥗" : "All Cuisines 🍽️"}</strong>
+            </span>
+          </div>
+
+          {isSpecsExpanded && (
+            <div className="pt-2 animate-fadeIn">
+              <PlanSpecificationsEditor
+                specs={specs}
+                onChangeSpecs={setSpecs}
+                fromLocation={fromLocation}
+                destination={destination}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Row 6: Notes & Checklist */}
         <div>
           <label className="block text-xs font-mono uppercase text-[#71717A] dark:text-[#A1A1AA] tracking-wider mb-1">
             Notes / Route Checklist / Details

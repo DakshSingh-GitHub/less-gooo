@@ -426,6 +426,7 @@ export default function DashboardPage() {
                 trips={trips}
                 onSetTripActive={handleSetTripActive}
                 onNewTripClick={() => setCurrentView("new-trip")}
+                onUpdateTrip={handleUpdateTrip}
               />
             </div>
           )}
