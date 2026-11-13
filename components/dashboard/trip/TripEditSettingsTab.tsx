@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Trip, updateTripInDb } from "@/lib/appwrite";
 import { getAutomatedTripStatus } from "@/lib/tripDateUtils";
+import CityAutocompleteInput from "@/components/ui/CityAutocompleteInput";
 
 interface TripEditSettingsTabProps {
   trip: Trip;
@@ -136,12 +137,10 @@ export default function TripEditSettingsTab({
             <label className="block text-xs font-mono uppercase text-[#71717A] dark:text-[#A1A1AA] tracking-wider mb-1">
               Starting Location (From)
             </label>
-            <input
-              type="text"
+            <CityAutocompleteInput
               value={from}
-              onChange={(e) => setFrom(e.target.value)}
-              placeholder="e.g. New Delhi, India"
-              className="w-full h-11 px-3.5 rounded-xl border border-[#E7E3DC] dark:border-[#26272D] bg-[#FAF8F5] dark:bg-[#121316] text-[#18181B] dark:text-[#F4F1EA] text-sm focus:outline-none focus:border-[#C84B26]"
+              onChange={(val) => setFrom(val)}
+              placeholder="e.g. New Delhi, Delhi"
             />
           </div>
 
@@ -149,12 +148,11 @@ export default function TripEditSettingsTab({
             <label className="block text-xs font-mono uppercase text-[#71717A] dark:text-[#A1A1AA] tracking-wider mb-1">
               Destination *
             </label>
-            <input
-              type="text"
-              required
+            <CityAutocompleteInput
               value={destination}
-              onChange={(e) => setDestination(e.target.value)}
-              className="w-full h-11 px-3.5 rounded-xl border border-[#E7E3DC] dark:border-[#26272D] bg-[#FAF8F5] dark:bg-[#121316] text-[#18181B] dark:text-[#F4F1EA] text-sm focus:outline-none focus:border-[#C84B26]"
+              onChange={(val) => setDestination(val)}
+              placeholder="e.g. Varanasi, Uttar Pradesh"
+              required
             />
           </div>
         </div>

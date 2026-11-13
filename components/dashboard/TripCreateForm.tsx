@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { API_BASE_URL } from "@/lib/api";
 import { Trip } from "@/lib/appwrite";
 import { getAutomatedTripStatus } from "@/lib/tripDateUtils";
+import { reverseGeocodeToCity } from "@/lib/cityService";
+import CityAutocompleteInput from "@/components/ui/CityAutocompleteInput";
 
 interface TripCreateFormProps {
   userId: string;
@@ -49,36 +51,21 @@ export default function TripCreateForm({
     }
 
     setIsDetectingLocation(true);
-    setLocationStatus("Detecting coordinates...");
+    setLocationStatus("Detecting city from GPS...");
 
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude, longitude } = pos.coords;
         try {
-          const res = await fetch(
-            `${API_BASE_URL}/maps/reverse?lat=${latitude}&lon=${longitude}`
-          );
-          if (res.ok) {
-            const data = await res.json();
-            const city =
-              data.address?.city ||
-              data.address?.town ||
-              data.address?.village ||
-              data.address?.suburb ||
-              data.address?.county;
-            const state = data.address?.state;
-            const country = data.address?.country;
-            const placeString = [city, state, country].filter(Boolean).join(", ");
-            if (placeString) {
-              setFromLocation(placeString);
-              setLocationStatus("Auto-filled from GPS");
-              setIsDetectingLocation(false);
-              return;
-            }
+          const cityString = await reverseGeocodeToCity(latitude, longitude);
+          if (cityString) {
+            setFromLocation(cityString);
+            setLocationStatus("Auto-filled city from GPS");
+            setIsDetectingLocation(false);
+            return;
           }
         } catch {}
-        setFromLocation(`${latitude.toFixed(3)}°N, ${longitude.toFixed(3)}°E`);
-        setLocationStatus("GPS coordinates captured");
+        setLocationStatus("Could not resolve city. Please type city name.");
         setIsDetectingLocation(false);
       },
       (err) => {
@@ -207,19 +194,15 @@ export default function TripCreateForm({
               </button>
             </div>
             <div className="relative">
-              <input
-                type="text"
-                placeholder="e.g. New Delhi, India"
+              <CityAutocompleteInput
                 value={fromLocation}
-                onChange={(e) => {
-                  setFromLocation(e.target.value);
+                onChange={(val) => {
+                  setFromLocation(val);
                   setLocationStatus("Manually specified");
                 }}
-                className="w-full h-11 px-3.5 pr-8 rounded-xl border border-[#E7E3DC] dark:border-[#26272D] bg-[#FAF8F5] dark:bg-[#121316] text-[#18181B] dark:text-[#F4F1EA] text-sm focus:outline-none focus:border-[#C84B26]"
+                placeholder="e.g. New Delhi, Delhi"
+                required
               />
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-[#71717A]">
-                📍
-              </div>
             </div>
             {locationStatus && (
               <span className="text-[10px] font-mono text-[#71717A] dark:text-[#A1A1AA] mt-1 block">
@@ -232,13 +215,11 @@ export default function TripCreateForm({
             <label className="block text-xs font-mono uppercase text-[#71717A] dark:text-[#A1A1AA] tracking-wider mb-1">
               Destination *
             </label>
-            <input
-              type="text"
-              required
-              placeholder="e.g. Varanasi, Uttar Pradesh"
+            <CityAutocompleteInput
               value={destination}
-              onChange={(e) => setDestination(e.target.value)}
-              className="w-full h-11 px-3.5 rounded-xl border border-[#E7E3DC] dark:border-[#26272D] bg-[#FAF8F5] dark:bg-[#121316] text-[#18181B] dark:text-[#F4F1EA] text-sm focus:outline-none focus:border-[#C84B26]"
+              onChange={(val) => setDestination(val)}
+              placeholder="e.g. Varanasi, Uttar Pradesh"
+              required
             />
           </div>
         </div>
