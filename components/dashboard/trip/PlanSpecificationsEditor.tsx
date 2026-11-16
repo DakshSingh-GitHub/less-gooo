@@ -130,9 +130,16 @@ export default function PlanSpecificationsEditor({
             <h4 className="font-serif text-lg text-[#18181B] dark:text-[#F4F1EA]">
               How are you traveling to {displayDest}?
             </h4>
-            <p className="text-xs text-[#71717A] dark:text-[#A1A1AA] font-light">
-              Route: {displayFrom} ➔ {displayDest} (~{approachingCalc.distanceKm} km)
-            </p>
+            <div className="flex flex-wrap items-center gap-2 mt-1">
+              <p className="text-xs text-[#71717A] dark:text-[#A1A1AA] font-light">
+                Route: <strong className="font-medium text-[#18181B] dark:text-[#F4F1EA]">{displayFrom}</strong> ➔ <strong className="font-medium text-[#18181B] dark:text-[#F4F1EA]">{displayDest}</strong> (~{approachingCalc.distanceKm} km)
+              </p>
+              {approachingCalc.corridorType && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-[#FAF8F5] dark:bg-[#121316] text-[#C84B26] dark:text-[#E05A32] border border-[#E7E3DC] dark:border-[#26272D]">
+                  {approachingCalc.corridorType}
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Passenger Count */}
@@ -242,11 +249,20 @@ export default function PlanSpecificationsEditor({
 
         {/* Approaching Other Modes Summary */}
         {specs.approachingTransitMode !== "self_car" && (
-          <div className="p-3 rounded-xl bg-[#FAF8F5] dark:bg-[#121316] border border-[#E7E3DC] dark:border-[#26272D] flex items-center justify-between font-mono text-xs">
-            <span className="text-[#18181B] dark:text-[#F4F1EA]">
-              {approachingCalc.summaryText}
-            </span>
-            <span className="font-semibold text-[#C84B26]">
+          <div
+            className={`p-3.5 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-2 font-mono text-xs ${
+              approachingCalc.isFlightNotViable
+                ? "bg-amber-500/10 border-amber-500/30 text-amber-900 dark:text-amber-200"
+                : "bg-[#FAF8F5] dark:bg-[#121316] border-[#E7E3DC] dark:border-[#26272D]"
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              {approachingCalc.isFlightNotViable && <span>⚠️</span>}
+              <span className="text-[#18181B] dark:text-[#F4F1EA]">
+                {approachingCalc.summaryText}
+              </span>
+            </div>
+            <span className="font-semibold text-[#C84B26] shrink-0">
               Subtotal: ₹{approachingCalc.totalCost.toLocaleString()}
             </span>
           </div>
@@ -266,9 +282,16 @@ export default function PlanSpecificationsEditor({
             <h4 className="font-serif text-lg text-[#18181B] dark:text-[#F4F1EA]">
               How are you returning from {displayDest}?
             </h4>
-            <p className="text-xs text-[#71717A] dark:text-[#A1A1AA] font-light">
-              Route: {displayDest} ➔ {displayFrom} (~{departureCalc.distanceKm} km)
-            </p>
+            <div className="flex flex-wrap items-center gap-2 mt-1">
+              <p className="text-xs text-[#71717A] dark:text-[#A1A1AA] font-light">
+                Route: <strong className="font-medium text-[#18181B] dark:text-[#F4F1EA]">{displayDest}</strong> ➔ <strong className="font-medium text-[#18181B] dark:text-[#F4F1EA]">{displayFrom}</strong> (~{departureCalc.distanceKm} km)
+              </p>
+              {departureCalc.corridorType && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-[#FAF8F5] dark:bg-[#121316] text-emerald-600 dark:text-emerald-400 border border-[#E7E3DC] dark:border-[#26272D]">
+                  {departureCalc.corridorType}
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
@@ -360,11 +383,20 @@ export default function PlanSpecificationsEditor({
 
         {/* Departure Other Modes Summary */}
         {specs.departureTransitMode !== "self_car" && (
-          <div className="p-3 rounded-xl bg-[#FAF8F5] dark:bg-[#121316] border border-[#E7E3DC] dark:border-[#26272D] flex items-center justify-between font-mono text-xs">
-            <span className="text-[#18181B] dark:text-[#F4F1EA]">
-              {departureCalc.summaryText}
-            </span>
-            <span className="font-semibold text-[#C84B26]">
+          <div
+            className={`p-3.5 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-2 font-mono text-xs ${
+              departureCalc.isFlightNotViable
+                ? "bg-amber-500/10 border-amber-500/30 text-amber-900 dark:text-amber-200"
+                : "bg-[#FAF8F5] dark:bg-[#121316] border-[#E7E3DC] dark:border-[#26272D]"
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              {departureCalc.isFlightNotViable && <span>⚠️</span>}
+              <span className="text-[#18181B] dark:text-[#F4F1EA]">
+                {departureCalc.summaryText}
+              </span>
+            </div>
+            <span className="font-semibold text-[#C84B26] shrink-0">
               Subtotal: ₹{departureCalc.totalCost.toLocaleString()}
             </span>
           </div>

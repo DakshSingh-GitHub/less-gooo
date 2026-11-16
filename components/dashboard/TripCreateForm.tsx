@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { API_BASE_URL } from "@/lib/api";
 import { Trip, PlanSpecifications } from "@/lib/appwrite";
 import { getAutomatedTripStatus } from "@/lib/tripDateUtils";
 import { reverseGeocodeToCity } from "@/lib/cityService";
@@ -85,7 +84,28 @@ export default function TripCreateForm({
   };
 
   useEffect(() => {
-    detectLocation();
+    const timer = setTimeout(() => {
+      detectLocation();
+      try {
+        const savedDraft = localStorage.getItem("lessgooo_draft_trip");
+        if (savedDraft) {
+          const draft = JSON.parse(savedDraft);
+          if (draft.destination) {
+            setDestination(draft.destination);
+            setTitle(`Trip to ${draft.destination}`);
+          }
+          if (draft.startDate) setStartDate(draft.startDate);
+          if (draft.endDate) setEndDate(draft.endDate);
+          if (draft.travelers) {
+            const count = parseInt(draft.travelers) || 2;
+            setSpecs((prev) => ({ ...prev, passengersCount: count }));
+          }
+          localStorage.removeItem("lessgooo_draft_trip");
+        }
+      } catch {}
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -154,8 +174,8 @@ export default function TripCreateForm({
       } else {
         throw new Error("Unable to save trip. Please try again.");
       }
-    } catch (err: any) {
-      setErrorMsg(err?.message || "Failed to create trip.");
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : "Failed to create trip.");
     } finally {
       setIsSubmitting(false);
     }
