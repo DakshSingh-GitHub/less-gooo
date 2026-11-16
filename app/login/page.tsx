@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { registerUser, loginUser, getCurrentUserProfile } from "@/lib/appwrite";
 import Logo from "@/components/Logo";
+import { getInitialTheme, toggleThemeMode } from "@/lib/theme";
 
 const INDIAN_STATES = [
   "Andhra Pradesh", "Assam", "Bihar", "Chhattisgarh", "Delhi", "Goa",
@@ -33,32 +34,22 @@ export default function LoginPage() {
 
   // If already logged in, redirect straight to dashboard
   useEffect(() => {
-    const savedTheme = localStorage.getItem("lessgooo-theme");
-    if (savedTheme === "dark" || (!savedTheme && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
-      setIsDarkMode(true);
-      document.documentElement.classList.add("dark");
-    } else {
-      setIsDarkMode(false);
-      document.documentElement.classList.remove("dark");
-    }
+    const timer = setTimeout(() => {
+      const isDark = document.documentElement.classList.contains("dark") || getInitialTheme() === "dark";
+      setIsDarkMode(isDark);
+    }, 0);
 
     getCurrentUserProfile().then((res) => {
       if (res?.account) {
         router.replace("/dashboard");
       }
     });
+
+    return () => clearTimeout(timer);
   }, [router]);
 
   const toggleTheme = () => {
-    if (isDarkMode) {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("lessgooo-theme", "light");
-      setIsDarkMode(false);
-    } else {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("lessgooo-theme", "dark");
-      setIsDarkMode(true);
-    }
+    setIsDarkMode((prev) => toggleThemeMode(prev));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -95,8 +86,8 @@ export default function LoginPage() {
         await loginUser(email, password);
         router.push("/dashboard");
       }
-    } catch (err: any) {
-      setErrorMsg(err?.message || "Authentication failed. Please verify credentials.");
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : "Authentication failed. Please verify credentials.");
     } finally {
       setIsLoading(false);
     }

@@ -24,6 +24,7 @@ import {
   getLocalTodayDateString,
   reconcileTripsWithCurrentDate,
 } from "@/lib/tripDateUtils";
+import { getInitialTheme, toggleThemeMode } from "@/lib/theme";
 
 import DashboardNavbar from "@/components/dashboard/DashboardNavbar";
 import DashboardSidebar, { SidebarView } from "@/components/dashboard/DashboardSidebar";
@@ -81,14 +82,8 @@ export default function DashboardPage() {
   // Authentication & Initial Data Fetch
   useEffect(() => {
     // Theme setup
-    const savedTheme = localStorage.getItem("lessgooo-theme");
-    if (savedTheme === "dark" || (!savedTheme && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
-      setIsDarkMode(true);
-      document.documentElement.classList.add("dark");
-    } else {
-      setIsDarkMode(false);
-      document.documentElement.classList.remove("dark");
-    }
+    const isDark = document.documentElement.classList.contains("dark") || getInitialTheme() === "dark";
+    setIsDarkMode(isDark);
 
     // 1. Instant Zero-Latency Load from LocalStorage Cache
     const cachedUser = getCachedUserProfile();
@@ -179,15 +174,7 @@ export default function DashboardPage() {
   }, [trips, user?.userId, syncTripsWithDate]);
 
   const toggleTheme = () => {
-    if (isDarkMode) {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("lessgooo-theme", "light");
-      setIsDarkMode(false);
-    } else {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("lessgooo-theme", "dark");
-      setIsDarkMode(true);
-    }
+    setIsDarkMode((prev) => toggleThemeMode(prev));
   };
 
   const handleLogout = async () => {

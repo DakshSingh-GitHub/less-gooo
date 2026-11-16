@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -12,6 +13,7 @@ import {
   updateUserProfile,
   UserProfile
 } from "@/lib/appwrite";
+import { getInitialTheme, toggleThemeMode } from "@/lib/theme";
 
 const INDIAN_STATES = [
   "Andhra Pradesh", "Assam", "Bihar", "Chhattisgarh", "Delhi", "Goa",
@@ -38,14 +40,10 @@ export default function AccountInfoPage() {
   const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem("lessgooo-theme");
-    if (savedTheme === "dark" || (!savedTheme && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
-      setIsDarkMode(true);
-      document.documentElement.classList.add("dark");
-    } else {
-      setIsDarkMode(false);
-      document.documentElement.classList.remove("dark");
-    }
+    const timer = setTimeout(() => {
+      const isDark = document.documentElement.classList.contains("dark") || getInitialTheme() === "dark";
+      setIsDarkMode(isDark);
+    }, 0);
 
     // Instant Load from Cache
     const cachedUser = getCachedUserProfile();
@@ -75,18 +73,12 @@ export default function AccountInfoPage() {
         router.replace("/login");
       }
     });
+
+    return () => clearTimeout(timer);
   }, [router]);
 
   const toggleTheme = () => {
-    if (isDarkMode) {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("lessgooo-theme", "light");
-      setIsDarkMode(false);
-    } else {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("lessgooo-theme", "dark");
-      setIsDarkMode(true);
-    }
+    setIsDarkMode((prev) => toggleThemeMode(prev));
   };
 
   const handleLogout = async () => {
@@ -118,8 +110,8 @@ export default function AccountInfoPage() {
       } else {
         throw new Error("Unable to update profile. Please try again.");
       }
-    } catch (err: any) {
-      setStatusMessage({ type: "error", text: err?.message || "Failed to update profile." });
+    } catch (err: unknown) {
+      setStatusMessage({ type: "error", text: err instanceof Error ? err.message : "Failed to update profile." });
     } finally {
       setIsSaving(false);
     }

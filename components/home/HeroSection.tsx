@@ -132,14 +132,14 @@ export default function HeroSection({ onInitiatePlan, selectedDestination }: Her
           {/* Top Destination Selector Pills */}
           <div className="absolute top-6 left-6 right-6 z-20 flex flex-wrap items-center justify-between gap-3">
             {/* Live Field Preview with animated radar wave */}
-            <div className="flex items-center gap-2 bg-black/45 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/20 shadow-sm">
-              <span className="relative flex h-2.5 w-2.5">
+            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-white/0">
+              {/* <span className="relative flex h-2.5 w-2.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#E05A32] opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#E05A32]"></span>
               </span>
               <span className="text-[11px] font-mono text-white/95 uppercase tracking-wider font-medium">
                 Live Field Preview
-              </span>
+              </span> */}
             </div>
 
             {/* Interactive Switchers with animated progress indicator */}

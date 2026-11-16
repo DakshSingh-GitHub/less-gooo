@@ -20,6 +20,7 @@ import CapabilitiesShowcase from "@/components/home/CapabilitiesShowcase";
 import HowItWorks from "@/components/home/HowItWorks";
 import PricingPreview from "@/components/home/PricingPreview";
 import HomeFooter from "@/components/home/HomeFooter";
+import { getInitialTheme, toggleThemeMode } from "@/lib/theme";
 
 export default function Home() {
   const router = useRouter();
@@ -57,26 +58,16 @@ export default function Home() {
       }
     });
 
-    const savedTheme = localStorage.getItem("lessgooo-theme");
-    if (savedTheme === "dark" || (!savedTheme && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
-      setIsDarkMode(true);
-      document.documentElement.classList.add("dark");
-    } else {
-      setIsDarkMode(false);
-      document.documentElement.classList.remove("dark");
-    }
+    const timer = setTimeout(() => {
+      const isDark = document.documentElement.classList.contains("dark") || getInitialTheme() === "dark";
+      setIsDarkMode(isDark);
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const toggleTheme = () => {
-    if (isDarkMode) {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("lessgooo-theme", "light");
-      setIsDarkMode(false);
-    } else {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("lessgooo-theme", "dark");
-      setIsDarkMode(true);
-    }
+    setIsDarkMode((prev) => toggleThemeMode(prev));
   };
 
   // Close dropdown on outside click

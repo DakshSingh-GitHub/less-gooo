@@ -39,36 +39,73 @@ export default function TripProposedPlanTab({
     setAutoLoggedNotice(null);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/trips/generate-plan`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          destination: trip.destination,
-          from: trip.from || "",
-          startDate: trip.startDate,
-          endDate: trip.endDate,
-          budget: trip.budget,
-          currency: trip.currency,
-          category: trip.category,
-          specifications: trip.specifications || {
-            pace: "moderate",
-            includeRestaurants: true,
-            dietaryPreference: "pure_veg",
-            cuisineTypes: ["Heritage Street Food", "Regional Thali"],
-            touristPreferences: ["Heritage Temples & Spiritual Ghats"],
-            stayType: "Heritage Haveli / Courtyard Homestay",
-            includeStayRest: true,
-            transitMode: "self_car",
-            passengersCount: 2,
-            carFuelType: "petrol",
-            necessities: { hospital: true, medicalStore: true, atm: true, restrooms: true }
-          }
-        })
-      });
+      const payload = {
+        destination: trip.destination,
+        from: trip.from || "",
+        startDate: trip.startDate,
+        endDate: trip.endDate,
+        budget: trip.budget,
+        currency: trip.currency,
+        category: trip.category,
+        specifications: trip.specifications || {
+          pace: "moderate",
+          includeRestaurants: true,
+          dietaryPreference: "pure_veg",
+          cuisineTypes: ["Heritage Street Food", "Regional Thali"],
+          touristPreferences: ["Heritage Temples & Spiritual Ghats"],
+          stayType: "Heritage Haveli / Courtyard Homestay",
+          includeStayRest: true,
+          transitMode: "self_car",
+          passengersCount: 2,
+          carFuelType: "petrol",
+          necessities: { hospital: true, medicalStore: true, atm: true, restrooms: true }
+        }
+      };
+
+      // 1. Try the built-in Next.js AI route first (runs on same origin with Gemini 2.5)
+      let res: Response | null = null;
+      try {
+        res = await fetch("/api/trips/generate-plan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+      } catch {
+        // Fallback to API_BASE_URL if relative fetch threw network error
+        if (API_BASE_URL) {
+          try {
+            res = await fetch(`${API_BASE_URL}/trips/generate-plan`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload)
+            });
+          } catch {}
+        }
+      }
+
+      // If relative route returned non-200, try API_BASE_URL before failing
+      if (!res || !res.ok) {
+        if (API_BASE_URL && (!res || res.status >= 500)) {
+          try {
+            const altRes = await fetch(`${API_BASE_URL}/trips/generate-plan`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload)
+            });
+            if (altRes.ok) {
+              res = altRes;
+            }
+          } catch {}
+        }
+      }
+
+      if (!res) {
+        throw new Error("Unable to connect to AI itinerary solver. Please check your network connection.");
+      }
 
       const data = await res.json();
       if (!res.ok || !data.proposedPlan) {
-        throw new Error(data.error || "Failed to generate plan");
+        throw new Error(data.error || data.detail || "Failed to generate plan");
       }
 
       const generatedPlan: ProposedPlanDay[] = data.proposedPlan;
@@ -137,8 +174,8 @@ export default function TripProposedPlanTab({
         departureTransitCost,
         estimatedTransitCost
       });
-    } catch (err: any) {
-      setErrorMsg(err?.message || "Failed to synthesize proposed itinerary plan.");
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : "Failed to synthesize proposed itinerary plan.");
     } finally {
       setIsGenerating(false);
     }

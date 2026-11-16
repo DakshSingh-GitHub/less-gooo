@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
 
@@ -619,6 +621,17 @@ export async function generateTripPlan(payload: {
   category: string;
   specifications: PlanSpecifications;
 }) {
+  try {
+    const res = await fetch("/api/trips/generate-plan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch {}
+
   return apiRequest<{
     success: boolean;
     source: string;

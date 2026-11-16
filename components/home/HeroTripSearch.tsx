@@ -189,7 +189,7 @@ export default function HeroTripSearch({
                 type="submit"
                 className="w-full py-3 px-5 rounded-2xl bg-[#C84B26] hover:bg-[#B33F1D] dark:bg-[#E05A32] dark:hover:bg-[#C84B26] text-white text-sm font-semibold tracking-wide shadow-md hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer group"
               >
-                <span>Generate Adaptive Plan</span>
+                <span>Generate Plan</span>
                 <svg
                   className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1.5"
                   fill="none"
