@@ -23,7 +23,7 @@ export default function PricingPreview({ onSelectPlan }: PricingPreviewProps) {
       {/* Plans Comparison Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto items-stretch">
         {/* Plan 1: Free Explorer */}
-        <div className="p-8 sm:p-10 rounded-3xl bg-white dark:bg-[#1A1B20] border border-[#E7E3DC] dark:border-[#26272D] shadow-sm flex flex-col justify-between space-y-8 hover:shadow-md transition-shadow">
+        <div className="p-8 sm:p-10 rounded-3xl bg-white dark:bg-[#1A1B20] border border-[#E7E3DC] dark:border-[#26272D] shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between space-y-8">
           <div className="space-y-6">
             <div className="space-y-2">
               <span className="text-xs font-mono uppercase text-[#71717A] dark:text-[#A1A1AA] tracking-wider block">
@@ -64,16 +64,16 @@ export default function PricingPreview({ onSelectPlan }: PricingPreviewProps) {
 
           <button
             onClick={() => onSelectPlan("free")}
-            className="w-full py-3.5 rounded-full border border-[#D4CEC3] dark:border-[#383A42] text-[#18181B] dark:text-[#F4F1EA] text-xs font-semibold hover:bg-[#FAF8F5] dark:hover:bg-[#25272F] transition-colors cursor-pointer"
+            className="w-full py-3.5 rounded-full border border-[#D4CEC3] dark:border-[#383A42] text-[#18181B] dark:text-[#F4F1EA] text-xs font-semibold hover:bg-[#FAF8F5] dark:hover:bg-[#25272F] hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer"
           >
             Get Started Free
           </button>
         </div>
 
         {/* Plan 2: Pro Suite (Hero Highlight) */}
-        <div className="p-8 sm:p-10 rounded-3xl bg-white dark:bg-[#1A1B20] border-2 border-[#18181B] dark:border-[#F4F1EA] shadow-xl flex flex-col justify-between space-y-8 relative overflow-hidden">
+        <div className="p-8 sm:p-10 rounded-3xl bg-white dark:bg-[#1A1B20] border-2 border-[#18181B] dark:border-[#F4F1EA] shadow-xl hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between space-y-8 relative overflow-hidden group">
           {/* Top Decorative Tag */}
-          <div className="absolute top-0 right-0 bg-[#C84B26] dark:bg-[#E05A32] text-white text-[10px] font-mono uppercase tracking-widest px-4 py-1.5 rounded-bl-2xl font-bold">
+          <div className="absolute top-0 right-0 bg-[#C84B26] dark:bg-[#E05A32] text-white text-[10px] font-mono uppercase tracking-widest px-4 py-1.5 rounded-bl-2xl font-bold shadow-xs">
             Adaptive Intelligence
           </div>
 
@@ -117,7 +117,7 @@ export default function PricingPreview({ onSelectPlan }: PricingPreviewProps) {
 
           <button
             onClick={() => onSelectPlan("pro")}
-            className="w-full py-3.5 rounded-full bg-[#18181B] text-white hover:bg-[#C84B26] dark:bg-[#F4F1EA] dark:text-[#121316] dark:hover:bg-[#E05A32] dark:hover:text-white text-xs font-semibold tracking-wide transition-colors shadow-sm cursor-pointer"
+            className="w-full py-3.5 rounded-full bg-[#18181B] text-white hover:bg-[#C84B26] dark:bg-[#F4F1EA] dark:text-[#121316] dark:hover:bg-[#E05A32] dark:hover:text-white text-xs font-semibold tracking-wide hover:scale-[1.01] active:scale-[0.99] transition-all shadow-md hover:shadow-lg cursor-pointer"
           >
             Upgrade to Pro
           </button>

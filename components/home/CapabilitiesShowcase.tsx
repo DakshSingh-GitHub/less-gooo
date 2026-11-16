@@ -105,10 +105,12 @@ export default function CapabilitiesShowcase() {
                       <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">Completed</span>
                     </div>
 
-                    <div className="p-3.5 rounded-2xl bg-[#C84B26]/10 border border-[#C84B26]/30">
+                    <div className="p-3.5 rounded-2xl bg-[#C84B26]/10 border border-[#C84B26]/30 animate-in fade-in slide-in-from-top-1 duration-300">
                       <div className="flex items-center justify-between">
                         <span className="text-[11px] font-mono text-[#C84B26] dark:text-[#E05A32] font-semibold">Extended Stay Welcomed (+75 mins)</span>
-                        <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-[#C84B26] text-white">Auto-Rebalanced</span>
+                        <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-[#C84B26] text-white flex items-center gap-1 shadow-xs animate-pulse">
+                          <span>✓</span> Auto-Rebalanced
+                        </span>
                       </div>
                       <div className="text-sm font-medium text-[#18181B] dark:text-[#F4F1EA] mt-1">Artisan Silk Weaving Quarter</div>
                       <p className="text-xs text-[#52525B] dark:text-[#A1A1AA] mt-1">
@@ -316,16 +318,26 @@ export default function CapabilitiesShowcase() {
           <div className="lg:col-span-7">
             <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-[#1A1B20] border border-[#E7E3DC] dark:border-[#26272D] shadow-xl space-y-6">
               {/* Daily Runway Header */}
-              <div className="flex items-center justify-between pb-4 border-b border-[#E7E3DC] dark:border-[#26272D]">
-                <div>
-                  <span className="text-xs font-mono uppercase text-[#71717A] block">Today’s Budget Runway</span>
-                  <div className="text-2xl font-serif text-[#18181B] dark:text-[#F4F1EA] font-normal">
-                    ₹1,850 <span className="text-xs font-sans font-light text-[#71717A]">/ ₹3,000 spent</span>
+              <div className="pb-4 border-b border-[#E7E3DC] dark:border-[#26272D] space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-mono uppercase text-[#71717A] block">Today’s Budget Runway</span>
+                    <div className="text-2xl font-serif text-[#18181B] dark:text-[#F4F1EA] font-normal">
+                      ₹1,850 <span className="text-xs font-sans font-light text-[#71717A]">/ ₹3,000 spent</span>
+                    </div>
                   </div>
+                  <span className="px-3 py-1 rounded-full text-xs font-mono bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium animate-pulse">
+                    ● On Track (₹1,150 left)
+                  </span>
                 </div>
-                <span className="px-3 py-1 rounded-full text-xs font-mono bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium">
-                  ● On Track (₹1,150 left)
-                </span>
+
+                {/* Animated Budget Pace Progress Bar */}
+                <div className="w-full bg-[#FAF8F5] dark:bg-[#121316] rounded-full h-2 overflow-hidden border border-[#E7E3DC] dark:border-[#26272D]">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-[#E5A93C] to-[#C84B26] transition-all duration-1000 ease-out"
+                    style={{ width: "61.6%" }}
+                  />
+                </div>
               </div>
 
               {/* Categorized Breakdown */}

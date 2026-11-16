@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import HeroTripSearch from "./HeroTripSearch";
 
 interface HeroSectionProps {
@@ -54,9 +54,27 @@ const HERO_DESTINATIONS = [
   },
 ];
 
+const ROTATION_INTERVAL_MS = 6500;
+
 export default function HeroSection({ onInitiatePlan, selectedDestination }: HeroSectionProps) {
   const [activeIdx, setActiveIdx] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
   const activeDest = HERO_DESTINATIONS[activeIdx];
+
+  // Auto-rotation interval (pauses on hover)
+  useEffect(() => {
+    if (isPaused) return;
+
+    const timer = setInterval(() => {
+      setActiveIdx((prev) => (prev + 1) % HERO_DESTINATIONS.length);
+    }, ROTATION_INTERVAL_MS);
+
+    return () => clearInterval(timer);
+  }, [isPaused]);
+
+  const handleSelectSlide = (idx: number) => {
+    setActiveIdx(idx);
+  };
 
   const handleScrollToSearch = () => {
     const el = document.getElementById("trip-search-box");
@@ -74,61 +92,93 @@ export default function HeroSection({ onInitiatePlan, selectedDestination }: Her
 
   return (
     <section className="relative pt-6 pb-20 sm:pt-10 sm:pb-28 px-4 sm:px-6 max-w-7xl mx-auto overflow-hidden">
-      {/* Background Hero Visual Container */}
-      <div className="relative rounded-3xl overflow-hidden border border-[#E7E3DC] dark:border-[#26272D] shadow-xl bg-[#121316]">
-        {/* Cinematic Backdrop Image with Smooth Fade */}
-        <div className="relative h-[540px] sm:h-[620px] lg:h-[680px] w-full">
-          {HERO_DESTINATIONS.map((dest, idx) => (
-            <div
-              key={dest.id}
-              className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
-                idx === activeIdx ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
-              }`}
-            >
-              <Image
-                src={dest.image}
-                alt={dest.name}
-                fill
-                priority={idx === 0}
-                className="object-cover object-center scale-[1.02] transition-transform duration-1000"
-                sizes="(max-width: 1280px) 100vw, 1280px"
-              />
-              {/* Refined gradient overlay for legible editorial contrast */}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#121316]/95 via-[#121316]/55 to-black/35" />
-            </div>
-          ))}
+      {/* Background Hero Visual Container with Pause on Hover */}
+      <div
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
+        className="relative rounded-3xl overflow-hidden border border-[#E7E3DC] dark:border-[#26272D] shadow-2xl bg-[#121316] group/hero transition-all"
+      >
+        {/* Cinematic Backdrop Images with Ken Burns slow zoom & smooth crossfade */}
+        <div className="relative h-[540px] sm:h-[620px] lg:h-[680px] w-full overflow-hidden">
+          {HERO_DESTINATIONS.map((dest, idx) => {
+            const isActive = idx === activeIdx;
+            return (
+              <div
+                key={dest.id}
+                className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+                  isActive ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
+                }`}
+              >
+                <div
+                  className={`relative w-full h-full transition-transform duration-[7500ms] ease-out ${
+                    isActive ? "scale-108" : "scale-100"
+                  }`}
+                >
+                  <Image
+                    src={dest.image}
+                    alt={dest.name}
+                    fill
+                    priority={idx === 0}
+                    className="object-cover object-center"
+                    sizes="(max-width: 1280px) 100vw, 1280px"
+                  />
+                </div>
+                {/* Refined gradient overlay for legible editorial contrast */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#121316]/95 via-[#121316]/55 to-black/35" />
+              </div>
+            );
+          })}
 
           {/* Top Destination Selector Pills */}
           <div className="absolute top-6 left-6 right-6 z-20 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/15">
-              <span className="w-2 h-2 rounded-full bg-[#E05A32] animate-pulse" />
-              <span className="text-[11px] font-mono text-white/90 uppercase tracking-wider">
+            {/* Live Field Preview with animated radar wave */}
+            <div className="flex items-center gap-2 bg-black/45 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/20 shadow-sm">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#E05A32] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#E05A32]"></span>
+              </span>
+              <span className="text-[11px] font-mono text-white/95 uppercase tracking-wider font-medium">
                 Live Field Preview
               </span>
             </div>
 
-            {/* Switchers */}
-            <div className="flex items-center gap-1.5 bg-black/40 backdrop-blur-md p-1 rounded-full border border-white/15 overflow-x-auto scrollbar-none">
-              {HERO_DESTINATIONS.map((dest, idx) => (
-                <button
-                  key={dest.id}
-                  onClick={() => setActiveIdx(idx)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer whitespace-nowrap ${
-                    idx === activeIdx
-                      ? "bg-white text-[#18181B] shadow-md font-semibold"
-                      : "text-white/80 hover:text-white hover:bg-white/10"
-                  }`}
-                >
-                  {dest.name.split(",")[0]}
-                </button>
-              ))}
+            {/* Interactive Switchers with animated progress indicator */}
+            <div className="flex items-center gap-1.5 bg-black/45 backdrop-blur-md p-1 rounded-full border border-white/20 overflow-x-auto scrollbar-none shadow-sm">
+              {HERO_DESTINATIONS.map((dest, idx) => {
+                const isActive = idx === activeIdx;
+                return (
+                  <button
+                    key={dest.id}
+                    onClick={() => handleSelectSlide(idx)}
+                    className={`relative overflow-hidden px-3.5 py-1.5 rounded-full text-xs transition-all cursor-pointer whitespace-nowrap font-medium ${
+                      isActive
+                        ? "bg-white text-[#18181B] shadow-md font-semibold"
+                        : "text-white/80 hover:text-white hover:bg-white/10"
+                    }`}
+                  >
+                    {/* Animated slide progress bar on active button using CSS */}
+                    {isActive && (
+                      <span
+                        key={`${dest.id}-${activeIdx}`}
+                        className={`absolute bottom-0 left-0 h-0.5 bg-[#C84B26] ${
+                          isPaused ? "w-full" : "animate-[heroProgress_6.5s_linear_forwards]"
+                        }`}
+                      />
+                    )}
+                    <span className="relative z-10">{dest.name.split(",")[0]}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          {/* Main Hero Editorial Copy */}
-          <div className="absolute bottom-10 left-6 right-6 sm:bottom-14 sm:left-12 sm:right-12 z-20 max-w-3xl space-y-5">
+          {/* Main Hero Editorial Copy with Keyed Fade/Slide Entrance */}
+          <div
+            key={activeDest.id}
+            className="absolute bottom-10 left-6 right-6 sm:bottom-14 sm:left-12 sm:right-12 z-20 max-w-3xl space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-700"
+          >
             <div className="inline-flex items-center gap-2 text-xs font-mono tracking-widest text-[#FCD34D] uppercase">
-              <span>✦</span>
+              <span className="animate-pulse">✦</span>
               <span>{activeDest.subtitle}</span>
               <span>•</span>
               <span className="text-white/70">{activeDest.vibe}</span>
@@ -147,11 +197,11 @@ export default function HeroSection({ onInitiatePlan, selectedDestination }: Her
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <button
                 onClick={handleScrollToSearch}
-                className="px-7 py-3 rounded-full bg-[#E05A32] hover:bg-[#C84B26] text-white text-sm font-semibold tracking-wide shadow-lg hover:shadow-xl transition-all cursor-pointer flex items-center gap-2 group"
+                className="px-7 py-3 rounded-full bg-[#E05A32] hover:bg-[#C84B26] text-white text-sm font-semibold tracking-wide shadow-lg hover:shadow-xl transition-all cursor-pointer flex items-center gap-2 group hover:scale-[1.02] active:scale-[0.98]"
               >
                 <span>Start Planning</span>
                 <svg
-                  className="w-4 h-4 transition-transform group-hover:translate-x-1"
+                  className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1.5"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -162,7 +212,7 @@ export default function HeroSection({ onInitiatePlan, selectedDestination }: Her
 
               <button
                 onClick={handleScrollToDestinations}
-                className="px-7 py-3 rounded-full bg-white/15 hover:bg-white/25 text-white backdrop-blur-md border border-white/25 text-sm font-medium transition-all cursor-pointer"
+                className="px-7 py-3 rounded-full bg-white/15 hover:bg-white/25 text-white backdrop-blur-md border border-white/25 text-sm font-medium transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
               >
                 Explore Destinations
               </button>
@@ -176,13 +226,24 @@ export default function HeroSection({ onInitiatePlan, selectedDestination }: Her
         </div>
       </div>
 
-      {/* Floating Integrated Trip Search Interface */}
+      {/* Floating Integrated Trip Search Interface with Subtle Floating Hover */}
       <div id="trip-search-box" className="-mt-8 sm:-mt-12 relative z-30 px-2 sm:px-6">
         <HeroTripSearch
           onInitiatePlan={onInitiatePlan}
           initialDestination={selectedDestination || activeDest.name}
         />
       </div>
+
+      <style jsx>{`
+        @keyframes heroProgress {
+          from {
+            width: 0%;
+          }
+          to {
+            width: 100%;
+          }
+        }
+      `}</style>
     </section>
   );
 }

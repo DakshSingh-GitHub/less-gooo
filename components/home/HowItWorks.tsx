@@ -52,14 +52,14 @@ export default function HowItWorks() {
           {STEPS.map((item) => (
             <div
               key={item.step}
-              className="relative p-7 rounded-2xl bg-white dark:bg-[#1A1B20] border border-[#E7E3DC] dark:border-[#26272D] shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between space-y-6"
+              className="group relative p-7 rounded-2xl bg-white dark:bg-[#1A1B20] border border-[#E7E3DC] dark:border-[#26272D] shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between space-y-6"
             >
               {/* Card Header with Step Number */}
               <div className="flex items-center justify-between">
-                <span className="font-mono text-xs text-[#C84B26] dark:text-[#E05A32] uppercase tracking-wider">
+                <span className="font-mono text-xs text-[#C84B26] dark:text-[#E05A32] uppercase tracking-wider group-hover:text-[#FF5A26] transition-colors">
                   {item.step} / {item.label}
                 </span>
-                <span className="text-2xl">{item.icon}</span>
+                <span className="text-2xl transition-transform duration-300 group-hover:scale-120">{item.icon}</span>
               </div>
 
               {/* Title & Description */}

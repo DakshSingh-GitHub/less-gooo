@@ -74,8 +74,8 @@ export default function HeroTripSearch({
 
   return (
     <div className="w-full max-w-4xl mx-auto">
-      {/* Container with warm tactile styling */}
-      <div className="bg-white/95 dark:bg-[#1A1B20]/95 backdrop-blur-md p-4 sm:p-6 rounded-3xl border border-[#E7E3DC] dark:border-[#26272D] shadow-2xl transition-all">
+      {/* Container with warm tactile styling & hover elevation */}
+      <div className="bg-white/95 dark:bg-[#1A1B20]/95 backdrop-blur-md p-4 sm:p-6 rounded-3xl border border-[#E7E3DC] dark:border-[#26272D] shadow-xl hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-300">
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Main 4-segment search bar */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
@@ -156,7 +156,7 @@ export default function HeroTripSearch({
               </button>
 
               {showTravelersMenu && (
-                <div className="absolute top-full left-0 w-52 mt-1.5 bg-white dark:bg-[#1A1B20] border border-[#E7E3DC] dark:border-[#26272D] rounded-2xl shadow-xl p-1.5 z-50 text-xs">
+                <div className="absolute top-full left-0 w-52 mt-1.5 bg-white dark:bg-[#1A1B20] border border-[#E7E3DC] dark:border-[#26272D] rounded-2xl shadow-xl p-1.5 z-50 text-xs animate-in fade-in slide-in-from-top-1 duration-150">
                   {[
                     "1 Traveller (Solo)",
                     "2 Travellers (Couple)",
@@ -170,9 +170,9 @@ export default function HeroTripSearch({
                         setTravelers(option);
                         setShowTravelersMenu(false);
                       }}
-                      className={`w-full text-left px-3 py-2 rounded-xl transition-colors ${
+                      className={`w-full text-left px-3 py-2 rounded-xl transition-all ${
                         travelers === option
-                          ? "bg-[#C84B26]/10 text-[#C84B26] font-medium"
+                          ? "bg-[#C84B26]/10 text-[#C84B26] font-medium scale-[1.01]"
                           : "hover:bg-[#FAF8F5] dark:hover:bg-[#25272F] text-[#18181B] dark:text-[#F4F1EA]"
                       }`}
                     >
@@ -187,11 +187,11 @@ export default function HeroTripSearch({
             <div className="md:col-span-3 pt-2 md:pt-4">
               <button
                 type="submit"
-                className="w-full py-3 px-5 rounded-2xl bg-[#C84B26] hover:bg-[#B33F1D] dark:bg-[#E05A32] dark:hover:bg-[#C84B26] text-white text-sm font-semibold tracking-wide shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer group"
+                className="w-full py-3 px-5 rounded-2xl bg-[#C84B26] hover:bg-[#B33F1D] dark:bg-[#E05A32] dark:hover:bg-[#C84B26] text-white text-sm font-semibold tracking-wide shadow-md hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer group"
               >
                 <span>Generate Adaptive Plan</span>
                 <svg
-                  className="w-4 h-4 transition-transform group-hover:translate-x-1"
+                  className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1.5"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
