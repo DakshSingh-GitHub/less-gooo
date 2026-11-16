@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
   try {
     const openMeteoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
       q
-    )}&count=10&language=en&format=json`;
+    )}&count=15&language=en&format=json`;
 
     const res = await fetch(openMeteoUrl, {
       headers: { "User-Agent": "LessGoooCitySearch/1.0" },
@@ -42,26 +42,34 @@ export async function GET(req: NextRequest) {
     if (res.ok) {
       const data = await res.json();
       if (Array.isArray(data.results) && data.results.length > 0) {
-        const results: CityResult[] = data.results.map((item: { name: string; admin1?: string; admin2?: string; country?: string; latitude?: number; longitude?: number }) => ({
-          name: item.name,
-          state: item.admin1 || item.admin2 || undefined,
-          country: item.country || undefined,
-          displayName: formatDisplayName(item.name, item.admin1, item.country),
-          lat: item.latitude,
-          lon: item.longitude,
-        }));
-        return NextResponse.json({ results });
+        // Enforce India-only restriction
+        const indianResults = data.results.filter(
+          (item: { country?: string; country_code?: string }) =>
+            item.country?.toLowerCase() === "india" || item.country_code?.toUpperCase() === "IN"
+        );
+
+        if (indianResults.length > 0) {
+          const results: CityResult[] = indianResults.map((item: { name: string; admin1?: string; admin2?: string; country?: string; latitude?: number; longitude?: number }) => ({
+            name: item.name,
+            state: item.admin1 || item.admin2 || undefined,
+            country: "India",
+            displayName: formatDisplayName(item.name, item.admin1, "India"),
+            lat: item.latitude,
+            lon: item.longitude,
+          }));
+          return NextResponse.json({ results });
+        }
       }
     }
   } catch {
     // Fall through to Nominatim
   }
 
-  // 2. Fallback to OpenStreetMap Nominatim
+  // 2. Fallback to OpenStreetMap Nominatim restricted strictly to India (&countrycodes=in)
   try {
     const nominatimUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
       q
-    )}&format=json&limit=8&addressdetails=1`;
+    )}&format=json&limit=12&addressdetails=1&countrycodes=in`;
 
     const res = await fetch(nominatimUrl, {
       headers: {
@@ -74,27 +82,40 @@ export async function GET(req: NextRequest) {
     if (res.ok) {
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) {
-        const results: CityResult[] = data.map((item: { address?: Record<string, string>; name?: string; display_name: string; lat: string; lon: string }) => {
-          const addr = item.address || {};
-          const name =
-            addr.city ||
-            addr.town ||
-            addr.village ||
-            addr.municipality ||
-            item.name ||
-            item.display_name.split(",")[0];
-          const state = addr.state || addr.region || undefined;
-          const country = addr.country || undefined;
+        const queryLower = q.toLowerCase();
+        const results: CityResult[] = data
+          .filter((item: { address?: Record<string, string>; name?: string; display_name?: string }) => {
+            const country = item.address?.country?.toLowerCase();
+            const countryCode = item.address?.country_code?.toLowerCase();
+            const isIndia = !country || country === "india" || countryCode === "in";
+            if (!isIndia) return false;
 
-          return {
-            name,
-            state,
-            country,
-            displayName: formatDisplayName(name, state, country),
-            lat: parseFloat(item.lat),
-            lon: parseFloat(item.lon),
-          };
-        });
+            // Ensure the result actually matches the search query
+            const nameMatch =
+              (item.name && item.name.toLowerCase().includes(queryLower)) ||
+              (item.display_name && item.display_name.toLowerCase().includes(queryLower));
+            return Boolean(nameMatch);
+          })
+          .map((item: { address?: Record<string, string>; name?: string; display_name: string; lat: string; lon: string }) => {
+            const addr = item.address || {};
+            const name =
+              item.name ||
+              addr.city ||
+              addr.town ||
+              addr.village ||
+              addr.municipality ||
+              item.display_name.split(",")[0];
+            const state = addr.state || addr.region || undefined;
+
+            return {
+              name,
+              state,
+              country: "India",
+              displayName: formatDisplayName(name, state, "India"),
+              lat: parseFloat(item.lat),
+              lon: parseFloat(item.lon),
+            };
+          });
         return NextResponse.json({ results });
       }
     }

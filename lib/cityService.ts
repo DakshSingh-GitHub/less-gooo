@@ -225,19 +225,23 @@ export async function searchCities(query: string): Promise<CityOption[]> {
       const omRes = await fetch(
         `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
           cleanQuery
-        )}&count=8&language=en&format=json`
+        )}&count=12&language=en&format=json`
       );
       if (omRes.ok) {
         const omData = await omRes.json();
         if (Array.isArray(omData.results)) {
-          remoteMatches = omData.results.map((item: { name: string; admin1?: string; country?: string; latitude?: number; longitude?: number }) => ({
-            name: item.name,
-            state: item.admin1 || undefined,
-            country: item.country || undefined,
-            displayName: formatCityDisplayName(item.name, item.admin1, item.country),
-            lat: item.latitude,
-            lon: item.longitude,
-          }));
+          remoteMatches = omData.results
+            .filter((item: { country?: string; country_code?: string }) =>
+              item.country?.toLowerCase() === "india" || item.country_code?.toUpperCase() === "IN"
+            )
+            .map((item: { name: string; admin1?: string; country?: string; latitude?: number; longitude?: number }) => ({
+              name: item.name,
+              state: item.admin1 || undefined,
+              country: "India",
+              displayName: formatCityDisplayName(item.name, item.admin1, "India"),
+              lat: item.latitude,
+              lon: item.longitude,
+            }));
         }
       }
     } catch {}
