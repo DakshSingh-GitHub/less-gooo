@@ -26,6 +26,9 @@ export const CURATED_CITIES: CuratedCity[] = [
   { name: "Meerut", state: "Uttar Pradesh", country: "India", lat: 28.9845, lon: 77.7064 },
   { name: "Moradabad", state: "Uttar Pradesh", country: "India", lat: 28.8386, lon: 78.7733 },
   { name: "Saharanpur", state: "Uttar Pradesh", country: "India", lat: 29.9679, lon: 77.5510 },
+  { name: "Sarnath", state: "Uttar Pradesh", country: "India", lat: 25.3716, lon: 83.0252 },
+  { name: "Chitrakoot", state: "Uttar Pradesh", country: "India", lat: 25.1764, lon: 80.8653 },
+  { name: "Kushinagar", state: "Uttar Pradesh", country: "India", lat: 26.7408, lon: 83.8890 },
 
   // Delhi NCR
   { name: "New Delhi", state: "Delhi", country: "India", lat: 28.6139, lon: 77.2090 },
@@ -115,6 +118,7 @@ export const CURATED_CITIES: CuratedCity[] = [
   { name: "Mahabalipuram", state: "Tamil Nadu", country: "India", lat: 12.6269, lon: 80.1927 },
   { name: "Tiruchirappalli", state: "Tamil Nadu", country: "India", lat: 10.7905, lon: 78.7047 },
   { name: "Thanjavur", state: "Tamil Nadu", country: "India", lat: 10.7870, lon: 79.1378 },
+  { name: "Pondicherry", state: "Puducherry", country: "India", lat: 11.9416, lon: 79.8083 },
 
   // Kerala
   { name: "Kochi", state: "Kerala", country: "India", lat: 9.9312, lon: 76.2673 },
@@ -208,29 +212,4 @@ export const CURATED_CITIES: CuratedCity[] = [
   { name: "Ranchi", state: "Jharkhand", country: "India", lat: 23.3441, lon: 85.3096 },
   { name: "Jamshedpur", state: "Jharkhand", country: "India", lat: 22.8046, lon: 86.2029 },
   { name: "Deoghar", state: "Jharkhand", country: "India", lat: 24.4826, lon: 86.6975 },
-
-  // Major Global Destinations
-  { name: "Dubai", state: "Dubai", country: "United Arab Emirates", lat: 25.2048, lon: 55.2708 },
-  { name: "Abu Dhabi", state: "Abu Dhabi", country: "United Arab Emirates", lat: 24.4539, lon: 54.3773 },
-  { name: "Singapore", state: "Singapore", country: "Singapore", lat: 1.3521, lon: 103.8198 },
-  { name: "Bangkok", state: "Bangkok", country: "Thailand", lat: 13.7563, lon: 100.5018 },
-  { name: "Phuket", state: "Phuket", country: "Thailand", lat: 7.8804, lon: 98.3923 },
-  { name: "Bali", state: "Bali", country: "Indonesia", lat: -8.4095, lon: 115.1889 },
-  { name: "Kuala Lumpur", state: "Federal Territory", country: "Malaysia", lat: 3.1390, lon: 101.6869 },
-  { name: "Tokyo", state: "Tokyo", country: "Japan", lat: 35.6762, lon: 139.6503 },
-  { name: "Kyoto", state: "Kyoto", country: "Japan", lat: 35.0116, lon: 135.7681 },
-  { name: "London", state: "England", country: "United Kingdom", lat: 51.5074, lon: -0.1278 },
-  { name: "Paris", state: "Île-de-France", country: "France", lat: 48.8566, lon: 2.3522 },
-  { name: "Rome", state: "Lazio", country: "Italy", lat: 41.9028, lon: 12.4964 },
-  { name: "Barcelona", state: "Catalonia", country: "Spain", lat: 41.3851, lon: 2.1734 },
-  { name: "Amsterdam", state: "North Holland", country: "Netherlands", lat: 52.3676, lon: 4.9041 },
-  { name: "New York", state: "New York", country: "United States", lat: 40.7128, lon: -74.0060 },
-  { name: "San Francisco", state: "California", country: "United States", lat: 37.7749, lon: -122.4194 },
-  { name: "Los Angeles", state: "California", country: "United States", lat: 34.0522, lon: -118.2437 },
-  { name: "Sydney", state: "New South Wales", country: "Australia", lat: -33.8688, lon: 151.2093 },
-  { name: "Toronto", state: "Ontario", country: "Canada", lat: 43.6532, lon: -79.3832 },
-  { name: "Kathmandu", state: "Bagmati", country: "Nepal", lat: 27.7172, lon: 85.3240 },
-  { name: "Colombo", state: "Western Province", country: "Sri Lanka", lat: 6.9271, lon: 79.8612 },
-  { name: "Male", state: "Kaafu Atoll", country: "Maldives", lat: 4.1755, lon: 73.5093 },
-  { name: "Doha", state: "Ad-Dawhah", country: "Qatar", lat: 25.2854, lon: 51.5310 },
 ];

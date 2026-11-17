@@ -48,12 +48,30 @@ async function geocodePlace(query: string): Promise<LatLng | null> {
   const parsed = parseLatLngString(query);
   if (parsed) return parsed;
 
-  const url = `${API_BASE_URL}/maps/geocode?q=${encodeURIComponent(query)}`;
-  const res = await fetch(url);
-  if (!res.ok) return null;
-  const data = await res.json();
-  if (!Array.isArray(data) || data.length === 0) return null;
-  return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+  try {
+    const url = `${API_BASE_URL}/maps/geocode?q=${encodeURIComponent(query)}`;
+    const res = await fetch(url);
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+      }
+    }
+  } catch {}
+
+  // Direct Nominatim OpenStreetMap fallback if backend service is unavailable
+  try {
+    const osmUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
+    const osmRes = await fetch(osmUrl, { headers: { "Accept-Language": "en" } });
+    if (osmRes.ok) {
+      const osmData = await osmRes.json();
+      if (Array.isArray(osmData) && osmData.length > 0) {
+        return { lat: parseFloat(osmData[0].lat), lng: parseFloat(osmData[0].lon) };
+      }
+    }
+  } catch {}
+
+  return null;
 }
 
 function haversineMeters(a: LatLng, b: LatLng): number {
@@ -232,10 +250,43 @@ export default function LiveNavigationMap({
           return;
         }
 
-        const osrmUrl = `${API_BASE_URL}/maps/route?orig_lat=${orig.lat}&orig_lng=${orig.lng}&dest_lat=${dest.lat}&dest_lng=${dest.lng}`;
-        const res = await fetch(osrmUrl);
-        if (!res.ok) throw new Error("Routing service unavailable");
-        const json = await res.json();
+        let json: {
+          routes?: Array<{
+            geometry?: { coordinates?: [number, number][] };
+            distance?: number;
+            duration?: number;
+            legs?: Array<{
+              steps?: Array<{
+                name?: string;
+                distance: number;
+                duration: number;
+                maneuver: { type: string; modifier?: string; location: [number, number] };
+              }>;
+            }>;
+          }>;
+        } | null = null;
+        try {
+          const osrmUrl = `${API_BASE_URL}/maps/route?orig_lat=${orig.lat}&orig_lng=${orig.lng}&dest_lat=${dest.lat}&dest_lng=${dest.lng}`;
+          const res = await fetch(osrmUrl);
+          if (res.ok) {
+            json = await res.json();
+          }
+        } catch {}
+
+        if (!json?.routes?.[0]) {
+          // Direct public OSRM driving route fallback
+          try {
+            const publicOsrm = `https://router.project-osrm.org/route/v1/driving/${orig.lng},${orig.lat};${dest.lng},${dest.lat}?overview=full&geometries=geojson&steps=true`;
+            const publicRes = await fetch(publicOsrm);
+            if (publicRes.ok) {
+              json = await publicRes.json();
+            }
+          } catch {}
+        }
+
+        if (!json?.routes?.[0]) {
+          throw new Error("Routing service currently unavailable");
+        }
         const route = json?.routes?.[0];
         if (!route?.geometry?.coordinates?.length) {
           throw new Error("No drivable route found between these locations.");
@@ -273,10 +324,12 @@ export default function LiveNavigationMap({
             : 0;
 
         if (cancelled) return;
+        const totalDist = route.distance || 0;
+        const totalDur = route.duration || 0;
         setRouteData({
           coordinates: coords,
-          totalDistance: route.distance,
-          totalDuration: route.duration,
+          totalDistance: totalDist,
+          totalDuration: totalDur,
           steps,
           originCoord: orig,
           destCoord: dest,
@@ -285,8 +338,8 @@ export default function LiveNavigationMap({
         setHeading(initialHeading);
         setCurrentStepIdx(steps.length > 1 ? 1 : 0);
         setDistanceToTurn(steps[0]?.distance || 0);
-        setRemainingDistance(route.distance);
-        setRemainingDuration(route.duration);
+        setRemainingDistance(totalDist);
+        setRemainingDuration(totalDur);
         setLoading(false);
       } catch (err) {
         if (!cancelled) {

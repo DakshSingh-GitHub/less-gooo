@@ -13,6 +13,25 @@ export const metadata: Metadata = {
   },
 };
 
+const themeScript = `
+(function() {
+  try {
+    var key = 'lessgooo-theme';
+    var keyAlt = 'lessgooo_theme';
+    var saved = localStorage.getItem(key) || localStorage.getItem(keyAlt);
+    var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var isDark = saved === 'dark' || (!saved && prefersDark);
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+      document.documentElement.style.colorScheme = 'dark';
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.style.colorScheme = 'light';
+    }
+  } catch (e) {}
+})();
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -20,7 +39,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full antialiased scroll-smooth" suppressHydrationWarning>
-      <body className="min-h-full flex flex-col bg-[#FAF8F5] text-[#18181B] dark:bg-[#121316] dark:text-[#F4F1EA] transition-colors duration-150">
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      <body className="min-h-full flex flex-col bg-[#FAF8F5] text-[#18181B] dark:bg-[#121316] dark:text-[#F4F1EA]">
         {children}
       </body>
     </html>
